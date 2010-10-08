@@ -1,0 +1,57 @@
+mapnik Installation
+======================================
+
+To install mapnik into the global Python environment (or a workingenv),
+using a traditional Zope 2 instance, you can do this:
+
+
+
+Prerequisites
+-------------------
+
+Don't forget that you can play with LDFLAGS/CFLAGS/LD_LIBRARY_PATH dto indicate non standart locations for the following requirements if it applies.
+
+
+You will have to have the includes and libraries for
+
+    - Boost_python linked to your python interpreter
+    - cairo / cairomm
+    - mapnik
+    - The current python interpreter
+
+Easy_install
+--------------
+
+ * When you're reading this you have probably already run
+   ``easy_install mapnik``. Find out how to install setuptools
+   (and EasyInstall) here:
+   http://peak.telecommunity.com/DevCenter/EasyInstall
+
+
+.. _pythonproducts: http://plone.org/products/pythonproducts
+
+
+Buildout
+----------
+
+ * Add ``mapnik`` to the list of eggs to install, e.g.
+
+::
+
+    [buildout]
+
+
+    [somepart]
+    recipe)someEggInstallerRecipe
+    ...
+    (options like include dirs)
+    ...
+    eggs =
+        ...
+        mapnik
+
+
+  * Re-run buildout, e.g. with:
+
+    $ ./bin/buildout
+
