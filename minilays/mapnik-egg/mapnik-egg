@@ -1,9 +1,9 @@
 [minibuild]
-dependencies=geos-3.2 libiconv-1.12 libjpeg libpng-1.2 libtiff-3 openssl-0.9 postgis-1.4 postgresql-8.4 proj-4.7 zlib-1.2 jasper-1.900 freetype-2.3 boost-1 python-2.6 libxml2-2.6 icu-4.5 cairo-1.8 fontconfig-2.5 cairomm-1.8 libtool-2.2 pixman-0.17 gdal-1.7
+dependencies=geos-3.2 libiconv-1.12 libjpeg libpng-1.2 libtiff-3 openssl-0.9 postgis-1.4 postgresql-8.4 proj-4.7 zlib-1.2 jasper-1.900 freetype-2.3 boost-1 python-2.6 libxml2-2.6 icu-4.5 cairo-1.8 fontconfig-2.5 cairomm-1.8 libtool-2.2 pixman-0.17 gdal-1.7 mapnik-0.7 boost-python-1
 src_uri=http://bitbucket.org/kiorky/mapnik
 src_type=static
 install_method=buildout
-category=dev
+category=others
 license=LGPL
 homepage=http://www.mapnik.org//.tbz2
-r
+revision=2

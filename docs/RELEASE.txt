@@ -1,0 +1,10 @@
+About this release
+======================================
+
+- Run the ``refresh.sh`` script (read its code ;)) to grab bits from a regular mapnik source/svn tree inside the distribution (the cpp bindings & internal agg includes)
+- Some of The difference between this egg and the classical mapnik bindings :
+
+    - ``mapnik.paths`` is not constructed at installation time as we cannot guess values.
+      It has the same apis but to construct the variables, it will use mapnik-config.
+      Take care about having **mapnik-config** inside your environment !
+

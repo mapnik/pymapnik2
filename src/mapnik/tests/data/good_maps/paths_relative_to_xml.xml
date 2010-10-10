@@ -1,0 +1,10 @@
+<Map paths_from_xml="true"><!-- default is true -->
+
+  <Layer name="lay">
+    <Datasource base="shp">
+      <Parameter name="file">../shp/poly.shp</Parameter>
+      <Parameter name="type">shape</Parameter>
+    </Datasource>
+  </Layer>
+  
+</Map>

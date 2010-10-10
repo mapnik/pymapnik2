@@ -1,30 +1,36 @@
-from setuptools import setup, find_packages
 import os
 
-version = '0.7_r2271'
+from setuptools import setup, find_packages, extension
 
-def read(rnames):
-    setupdir =  os.path.dirname( os.path.abspath(__file__))
-    return open(
-        os.path.join(setupdir, *rnames)
-    ).read()
+# we do not have the module installed yet.
+mapnik_utils = {}
+exec open('src/mapnik_utils.py').read() in mapnik_utils
+read = mapnik_utils['read']
+get_compilation_flags = mapnik_utils['get_compilation_flags']
 
-README =read((os.path.dirname(__file__),'README.txt'))
-INSTALL =read((os.path.dirname(__file__),'docs', 'INSTALL.txt'))
-CHANGELOG  = read((os.path.dirname(__file__), 'docs', 'HISTORY.txt'))
-tdt = """
-Tests & docs
-==============
-"""
-TESTS  = '%s' % (
-    '\n'
-)
-long_description = '\n'.join([README,
-                              INSTALL,
-                              CHANGELOG])+'\n'
+README = read(('README.txt',))
+INSTALL = read(('docs', 'INSTALL.txt'))
+RELEASE = read(('docs', 'RELEASE.txt'))
+CHANGELOG  = read(('docs', 'HISTORY.txt'))
+long_description = '\n'.join([README, INSTALL,  RELEASE, CHANGELOG])+'\n'
+
+compilation_flags = get_compilation_flags()
+sources_dir = os.path.abspath('cpp')
+agg_sources_dir = os.path.join(os.path.abspath('agg'), 'include')
+files = [os.path.join('cpp', f)
+         for f in os.listdir(sources_dir)
+         if f.endswith('.cpp')]
+
+install_requires=['setuptools',]
+test_requires = ['nose']
+for lib in compilation_flags['extra_link_args']:
+    if 'cairo' in lib:
+        install_requires.append('pycairo')
+        break
+
 setup(
     name='mapnik',
-    version=version,
+    version= '0.7_r2271',
     description="Python bindings for mapnik",
     long_description=long_description,
     classifiers=[
@@ -36,21 +42,21 @@ setup(
     author_email='kiorky@cryptelium.net',
     url='http://pypi.python.org/pypi/mapnik',
     license='LGPL',
-    namespace_packages=['mapnik', ],
     include_package_data=True,
     zip_safe=False,
-    extras_require={'test': ['ipython', 'zope.testing', 'lxml', 'zope.testbrowser', ]},
     packages=find_packages('src'),
     package_dir = {'': 'src'},
-    install_requires=[
-        'setuptools',
-        'pycairo',
+    extras_require={'tests': test_requires},
+    ext_modules = [
+        extension.Extension(
+            "_mapnik2", files,
+            include_dirs=[sources_dir, agg_sources_dir],
+            extra_compile_args = compilation_flags.get('includes', []),
+            libraries = compilation_flags.get('libraries', []),
+            extra_link_args = compilation_flags.get('extra_link_args', []),
+        ),
     ],
-    entry_points={
-        'paste.app_factory': ['cgwb_app=collective.generic.webbuilder.webserver:wsgi_app_factory',],
-        'console_scripts': ['cgwb=collective.generic.webbuilder.webserver:main',],
-        'paste.paster_create_template': [
-        ],
-    },
+    install_requires=['setuptools'],
+    test_suite = 'nose.collector',
+    entry_points={},
 )
-

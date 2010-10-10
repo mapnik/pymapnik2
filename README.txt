@@ -10,7 +10,6 @@ Official mapnik bindings repackaged in the distutils way to facilitate deploymen
 Credits
 =========
 
-
 Companies
 ----------------
 |makinacom|_
