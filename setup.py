@@ -29,7 +29,7 @@ for lib in compilation_flags['extra_link_args']:
         break
 
 setup(
-    name='mapnik',
+    name='mapnik2',
     version= '0.7_r2271',
     description="Python bindings for mapnik",
     long_description=long_description,
