@@ -1,5 +1,5 @@
 import os
-from mapnik_utils import mapnik_config, which
+from mapnik2.utils import mapnik_config, which
 
 inputpluginspath = None
 fontscollectionpath = None
