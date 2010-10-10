@@ -53,5 +53,5 @@ def test():
             # Fail, the map wasn't written
             return False
     
-    for m in glob.glob("../data/good_maps/*.xml"):
+    for m in glob.glob("./data/good_maps/*.xml"):
         compare_map(m)

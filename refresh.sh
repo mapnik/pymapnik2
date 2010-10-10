@@ -41,9 +41,13 @@ frsync() {
 frsync -a  $w/bindings/python/*pp cpp/
 frsync -a --exclude=.svn ${w}/agg/include/ agg/include/
 # refresh tests
-frsync -a --exclude=.svn ${w}/tests/python_tests/ src/mapnik/tests/python_tests/
+frsync -a --exclude=.svn ${w}/tests/python_tests/ src/mapnik2/tests/
+for i in $(find src/mapnik2/tests/ -name '*.py');do
+    sed -re "s/\.\.\/data/\.\/data/g" -i $i
+done
 # refresg test resources
-for i in $(grep -r "../data" src/mapnik/tests/python_tests/ \
+for i in $(grep -r "./data" src/mapnik2/tests/*py\
+    |sed -re "s/\.\/data/\.\.\/data/g" \
     |sed -re "s:.*('|\")../data:../data:g" \
     |sed -re "s/(\"|').*//g"\
     |sort -u\
@@ -53,18 +57,18 @@ for i in $(grep -r "../data" src/mapnik/tests/python_tests/ \
     |grep -v "broken.png" \
     |grep -v ":" \
     );do
-    dest=src/mapnik/tests/python_tests/$i
+    dest=src/mapnik2/tests/python_tests/$i
     ddest=$(dirname ${dest//*/aaaa})
     #echo "--> $i: $dest  / $ddest"
     if [[ ! -d $ddest ]];then
         mkdir -p $ddest || exit -1
     fi
     for j in ${w}/tests/python_tests/$i;do
-        fdest=src/mapnik/$(echo $j|sed -re "s:(.*)(tests/python_tests/.*)/[^/]*:\2:g")
+        fdest=src/mapnik2/$(echo $j|sed -re "s:(.*)(tests/python_tests/.*)/[^/]*:\2:g"|sed -re "s/python_tests//g")
         if [[ ! -d $fdest ]];then
             mkdir -p $fdest
         fi
-        frsync -a --exclude=.svn $j  $fdest/$(basename $j)
+        frsync -a --exclude=.svn $j  ${fdest//..\/data/.\/data}/$(basename $j)
     done
 done
 # vim:set et sts=4 ts=4 tw=0:

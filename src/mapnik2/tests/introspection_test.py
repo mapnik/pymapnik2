@@ -6,20 +6,21 @@ from utilities import Todo
 import mapnik2
 
 def test_introspect_symbolizers():
+    import pdb;pdb.set_trace()  ## Breakpoint ##
     # create a symbolizer
-    p = mapnik2.PointSymbolizer(mapnik2.PathExpression("../data/images/dummy.png"))
+    p = mapnik2.PointSymbolizer(mapnik2.PathExpression("./data/images/dummy.png"))
     p.allow_overlap = True
     p.opacity = 0.5
     
     eq_(p.allow_overlap, True)
     eq_(p.opacity, 0.5)
-    eq_(p.filename,'../data/images/dummy.png')
+    eq_(p.filename,'./data/images/dummy.png')
      
     # make sure the defaults
     # are what we think they are
     eq_(p.allow_overlap, True)
     eq_(p.opacity,0.5)
-    eq_(p.filename,'../data/images/dummy.png')
+    eq_(p.filename,'./data/images/dummy.png')
     
     # contruct objects to hold it
     r = mapnik2.Rule()
@@ -48,7 +49,7 @@ def test_introspect_symbolizers():
 
     eq_(p2.allow_overlap, True)
     eq_(p2.opacity, 0.5)
-    eq_(p2.filename,'../data/images/dummy.png')
+    eq_(p2.filename,'./data/images/dummy.png')
         
     ## but we need to be able to do:
     p2 = syms[0] # get the actual symbolizer, not the variant object
@@ -57,4 +58,4 @@ def test_introspect_symbolizers():
     
     eq_(p2.allow_overlap, True)
     eq_(p2.opacity, 0.5)
-    eq_(p2.filename,'../data/images/dummy.png')
+    eq_(p2.filename,'./data/images/dummy.png')

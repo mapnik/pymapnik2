@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import pdb;pdb.set_trace()  ## Breakpoint ##
 
 import os
 import mapnik2
@@ -15,7 +16,7 @@ def _pycairo_surface(type,sym):
         import cairo
         test_cairo_file = 'test.%s' % type
         m = mapnik2.Map(256,256)
-        mapnik2.load_map(m,'../data/good_maps/%s_symbolizer.xml' % sym)
+        mapnik2.load_map(m,'./data/good_maps/%s_symbolizer.xml' % sym)
         surface = getattr(cairo,'%sSurface' % type.upper())(test_cairo_file, m.width,m.height)
         mapnik2.render(m, surface)
         surface.finish()        

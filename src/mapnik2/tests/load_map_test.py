@@ -2,6 +2,7 @@
 
 from nose.tools import *
 from utilities import execution_path
+import pdb;pdb.set_trace()  ## Breakpoint ##
 
 import os, sys, glob, mapnik2
 
@@ -35,16 +36,16 @@ def assert_raises_runtime_error(file):
     mapnik2.load_map(m, file, strict)
 
 def test_broken_files():
-    broken_files = glob.glob("../data/broken_maps/*.xml")
+    broken_files = glob.glob("./data/broken_maps/*.xml")
 
     # Add a filename that doesn't exist 
-    broken_files.append("../data/broken/does_not_exist.xml")
+    broken_files.append("./data/broken/does_not_exist.xml")
 
     for file in broken_files:
         yield assert_raises_runtime_error, file
 
 def test_good_files():
-    good_files = glob.glob("../data/good_maps/*.xml")
+    good_files = glob.glob("./data/good_maps/*.xml")
 
     for file in good_files:
         yield assert_loads_successfully, file

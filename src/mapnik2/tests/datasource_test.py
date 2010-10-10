@@ -12,20 +12,20 @@ def setup():
     
 def test_field_listing():
     lyr = mapnik2.Layer('test')
-    lyr.datasource = mapnik2.Shapefile(file='../data/shp/poly.shp')
+    lyr.datasource = mapnik2.Shapefile(file='./data/shp/poly.shp')
     fields = lyr.datasource.fields()
     eq_(fields, ['AREA', 'EAS_ID', 'PRFEDEA'])
 
 def test_total_feature_count():
     lyr = mapnik2.Layer('test')
-    lyr.datasource = mapnik2.Shapefile(file='../data/shp/poly.shp')
+    lyr.datasource = mapnik2.Shapefile(file='./data/shp/poly.shp')
     features = lyr.datasource.all_features()
     num_feats = len(features)
     eq_(num_feats, 10)
 
 def test_feature_envelope():
     lyr = mapnik2.Layer('test')
-    lyr.datasource = mapnik2.Shapefile(file='../data/shp/poly.shp')
+    lyr.datasource = mapnik2.Shapefile(file='./data/shp/poly.shp')
     features = lyr.datasource.all_features()
     for feat in features:
         env = feat.envelope()
@@ -36,7 +36,7 @@ def test_feature_envelope():
 
 def test_feature_attributes():
     lyr = mapnik2.Layer('test')
-    lyr.datasource = mapnik2.Shapefile(file='../data/shp/poly.shp')
+    lyr.datasource = mapnik2.Shapefile(file='./data/shp/poly.shp')
     features = lyr.datasource.all_features()
     feat = features[0]
     attrs = {'PRFEDEA': u'35043411', 'EAS_ID': 168, 'AREA': 215229.266}

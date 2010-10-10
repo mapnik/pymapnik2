@@ -15,7 +15,7 @@ def test_dataraster_coloring():
     srs = '+init=epsg:32630'
     lyr = mapnik2.Layer('dataraster')
     lyr.datasource = mapnik2.Gdal(
-        file = '../data/raster/dataraster.tif',
+        file = './data/raster/dataraster.tif',
         band = 1,
         )
     lyr.srs = srs
@@ -59,7 +59,7 @@ def test_dataraster_query_point():
     srs = '+init=epsg:32630'
     lyr = mapnik2.Layer('dataraster')
     lyr.datasource = mapnik2.Gdal(
-        file = '../data/raster/dataraster.tif',
+        file = './data/raster/dataraster.tif',
         band = 1,
         )
     lyr.srs = srs
@@ -86,7 +86,7 @@ def test_dataraster_query_point():
 
 def test_load_save_map():
     map = mapnik2.Map(256,256)
-    in_map = "../data/good_maps/raster_symbolizer.xml"
+    in_map = "./data/good_maps/raster_symbolizer.xml"
     mapnik2.load_map(map, in_map)
 
     out_map = mapnik2.save_map_to_string(map)

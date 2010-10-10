@@ -76,10 +76,10 @@ def get_paired_images(w,h,mapfile):
     return i,i2    
 
 def test_render_from_serialization():
-    i,i2 = get_paired_images(100,100,'../data/good_maps/building_symbolizer.xml')
+    i,i2 = get_paired_images(100,100,'./data/good_maps/building_symbolizer.xml')
     eq_(i.tostring(),i2.tostring())
 
-    i,i2 = get_paired_images(100,100,'../data/good_maps/polygon_symbolizer.xml')
+    i,i2 = get_paired_images(100,100,'./data/good_maps/polygon_symbolizer.xml')
     eq_(i.tostring(),i2.tostring())
 
 def test_render_points():
