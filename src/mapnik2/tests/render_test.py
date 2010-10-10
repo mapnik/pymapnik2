@@ -3,7 +3,12 @@
 from nose.tools import *
 
 import os, mapnik2
-from utilities import Todo
+from mapnik2.tests.utilities import Todo, execution_path
+
+def setup():
+    # All of the paths used are relative, if we run the tests
+    # from another directory we need to chdir()
+    os.chdir(execution_path('.')) 
 
 def test_simplest_render():
     m = mapnik2.Map(256, 256)
@@ -76,7 +81,8 @@ def get_paired_images(w,h,mapfile):
     return i,i2    
 
 def test_render_from_serialization():
-    i,i2 = get_paired_images(100,100,'./data/good_maps/building_symbolizer.xml')
+    import pdb;pdb.set_trace()  ## Breakpoint ##
+    i,i2 = get_paired_images(100,100,'/home/kiorky/minitage/others/mapnik-egg/src/mapnik2/tests/data/good_maps/building_symbolizer.xml')
     eq_(i.tostring(),i2.tostring())
 
     i,i2 = get_paired_images(100,100,'./data/good_maps/polygon_symbolizer.xml')

@@ -10,7 +10,7 @@
     <StyleName>test</StyleName>
     <Datasource base="shp">
       <Parameter name="type">shape</Parameter>
-      <Parameter name="file">../../data/shp/poly.shp</Parameter>
+      <Parameter name="file">/home/kiorky/minitage/others/mapnik-egg/src/mapnik2/tests/data/shp/poly.shp</Parameter>
     </Datasource>
   </Layer>
   

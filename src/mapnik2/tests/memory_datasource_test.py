@@ -2,7 +2,7 @@
 import itertools
 import unittest
 
-from utilities import Todo
+from mapnik2.tests.utilities import Todo
 
 class MemoryDatasource(unittest.TestCase):
     ids = itertools.count(0)

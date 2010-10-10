@@ -4,7 +4,7 @@ import pdb;pdb.set_trace()  ## Breakpoint ##
 import os
 import mapnik2
 from nose.tools import *
-from utilities import execution_path,Todo
+from mapnik2.tests.utilities import execution_path,Todo
 
 def setup():
     # All of the paths used are relative, if we run the tests

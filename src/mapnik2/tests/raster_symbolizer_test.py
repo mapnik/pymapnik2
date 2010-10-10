@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from nose.tools import *
-from utilities import execution_path, save_data, contains_word
+from mapnik2.tests.utilities import execution_path, save_data, contains_word
 
 import os, mapnik2
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 from nose.tools import *
-from utilities import Todo
-from utilities import execution_path
+from mapnik2.tests.utilities import Todo
+from mapnik2.tests.utilities import execution_path
 import tempfile
 
 import os, sys, glob, mapnik2

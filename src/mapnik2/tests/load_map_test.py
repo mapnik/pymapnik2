@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from nose.tools import *
-from utilities import execution_path
+from mapnik2.tests.utilities import execution_path
 import pdb;pdb.set_trace()  ## Breakpoint ##
 
 import os, sys, glob, mapnik2
