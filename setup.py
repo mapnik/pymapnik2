@@ -4,7 +4,7 @@ from setuptools import setup, find_packages, extension
 
 # we do not have the module installed yet.
 mapnik_utils = {}
-exec open('src/mapnik_utils.py').read() in mapnik_utils
+exec open('src/mapnik2/utils.py').read() in mapnik_utils
 read = mapnik_utils['read']
 get_compilation_flags = mapnik_utils['get_compilation_flags']
 
