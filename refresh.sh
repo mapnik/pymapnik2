@@ -41,10 +41,10 @@ frsync() {
 frsync -a  $w/bindings/python/*pp cpp/
 frsync -a --exclude=.svn ${w}/agg/include/ agg/include/
 # refresh tests
-frsync -a --exclude=.svn ${w}/tests/python_tests/ src/mapnik2/tests/
+frsync -a --exclude=.svn ${w}/tests/python_tests/ src/mapnik2/tests/python_tests/
 for i in $(find src/mapnik2/tests/ -name '*.py');do
-    sed -re "s/\.\.\/data/\.\/data/g" -i $i
-    sed -re "s/from utilities/from mapnik2.tests.utilities/g" -i $i
+    #sed -re "s/\.\.\/data/\.\/data/g" -i $i
+    sed -re "s/from utilities/from mapnik2.tests.python_tests.utilities/g" -i $i
 done
 # refresh test resources
 frsync -a --delete --exclude=.svn ${w}/tests/data/ src/mapnik2/tests/data/

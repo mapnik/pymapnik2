@@ -2,7 +2,7 @@
 #!/usr/bin/env python
 
 from nose.tools import *
-from mapnik2.tests.utilities import execution_path, save_data, contains_word
+from mapnik2.tests.python_tests.utilities import execution_path, save_data, contains_word
 
 import os, mapnik2
 
@@ -41,7 +41,7 @@ def test_renders_with_cairo():
 
 def test_load_save_load_map():
     map = mapnik2.Map(256,256)
-    in_map = "./data/good_maps/glyph_symbolizer.xml"
+    in_map = "../data/good_maps/glyph_symbolizer.xml"
     mapnik2.load_map(map, in_map)
     style = map.find_style('arrows')
     sym = style.rules[0].symbols[0]
@@ -70,7 +70,7 @@ def create_map_and_append_symbolyzer(sym):
     srs = '+init=epsg:32630'
     lyr = mapnik2.Layer('arrows')
     lyr.datasource = mapnik2.Shapefile(
-        file = './data/shp/arrows.shp',
+        file = '../data/shp/arrows.shp',
         )
     lyr.srs = srs
     _map = mapnik2.Map(256,256, srs)

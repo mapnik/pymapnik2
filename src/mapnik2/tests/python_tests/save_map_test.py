@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 from nose.tools import *
-from mapnik2.tests.utilities import Todo
-from mapnik2.tests.utilities import execution_path
+from mapnik2.tests.python_tests.utilities import Todo
+from mapnik2.tests.python_tests.utilities import execution_path
 import tempfile
 
 import os, sys, glob, mapnik2
@@ -53,5 +53,5 @@ def test():
             # Fail, the map wasn't written
             return False
     
-    for m in glob.glob("./data/good_maps/*.xml"):
+    for m in glob.glob("../data/good_maps/*.xml"):
         compare_map(m)

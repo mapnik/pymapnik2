@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from nose.tools import *
-from mapnik2.tests.utilities import Todo
+from mapnik2.tests.python_tests.utilities import Todo
 
 import mapnik2, pickle
 
@@ -9,7 +9,7 @@ import mapnik2, pickle
 
 # ShieldSymbolizer initialization
 def test_shieldsymbolizer_init():
-    s = mapnik2.ShieldSymbolizer(mapnik2.Expression('[Field Name]'), 'DejaVu Sans Bold', 6, mapnik2.Color('#000000'), mapnik2.PathExpression('./data/images/dummy.png'))
+    s = mapnik2.ShieldSymbolizer(mapnik2.Expression('[Field Name]'), 'DejaVu Sans Bold', 6, mapnik2.Color('#000000'), mapnik2.PathExpression('../data/images/dummy.png'))
 
 # ShieldSymbolizer missing image file
 # images paths are now PathExpressions are evaluated at runtime
@@ -25,22 +25,22 @@ def test_pointsymbolizer_init():
     eq_(p.opacity,1)
     eq_(p.filename,'')
 
-    p = mapnik2.PointSymbolizer(mapnik2.PathExpression("./data/images/dummy.png"))
+    p = mapnik2.PointSymbolizer(mapnik2.PathExpression("../data/images/dummy.png"))
     eq_(p.allow_overlap, False)
     eq_(p.opacity, 1)
-    eq_(p.filename,'./data/images/dummy.png')
+    eq_(p.filename,'../data/images/dummy.png')
 
 # PointSymbolizer missing image file
 # images paths are now PathExpressions are evaluated at runtime
 # so it does not make sense to throw...
 #@raises(RuntimeError)
 #def test_pointsymbolizer_missing_image():
- #   p = mapnik2.PointSymbolizer(mapnik2.PathExpression("./data/images/broken.png"))
+ #   p = mapnik2.PointSymbolizer(mapnik2.PathExpression("../data/images/broken.png"))
 
 # PointSymbolizer pickling
 def test_pointsymbolizer_pickle():
     raise Todo("point_symbolizer pickling currently disabled")
-    p = mapnik2.PointSymbolizer(mapnik2.PathExpression("./data/images/dummy.png"))
+    p = mapnik2.PointSymbolizer(mapnik2.PathExpression("../data/images/dummy.png"))
     p2 = pickle.loads(pickle.dumps(p,pickle.HIGHEST_PROTOCOL))
     # image type, width, and height only used in contructor...
     eq_(p.filename, p2.filename)

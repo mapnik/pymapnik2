@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from nose.tools import *
-from mapnik2.tests.utilities import Todo
+from mapnik2.tests.python_tests.utilities import Todo
 
 import mapnik2
 
