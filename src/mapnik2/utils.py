@@ -26,7 +26,7 @@ def which(program,
             return fp
         if (sys.platform.startswith('win') or sys.platform.startswith('cyg'))  and os.path.exists(fp+'.exe'):
             return fp+'.exe'
-    raise IOError('Program not fond: %s in %s ' % (program, PATH))
+    raise IOError('Program not found: %s in %s ' % (program, PATH))
 
 def get_config_output(exe, args):
     cmd = which(exe)
@@ -64,10 +64,12 @@ def get_boost_flags():
             suffix = 'so'
             if sys.platform == 'cygwin':
                 prefix = 'cyg'
-            if sys.platform.startswith('win'):
+            if sys.platform == 'darwin':
+                suffix = 'dylib'
+            elif os.name == 'nt':
                 suffix = 'dll'
             pretendants = libraries_pretendants[p]
-            while(len(pretendants)):
+            while(True):
                 try:
                     pr = pretendants.pop()
                     dll = CDLL('%s%s.%s' % (prefix, pr, suffix))
@@ -86,6 +88,8 @@ def get_compilation_flags():
         'extra_link_args': [],
     }
     bf = get_boost_flags()
+    if not bf['libraries']:
+        sys.stderr.write('Warning: libboost_python not found')
     compilation_flags['includes'].extend(bf['includes'])
     compilation_flags['libraries'].extend(bf['libraries'])
     compilation_flags['includes'].extend(mapnik_config(["--cflags"]).split())
