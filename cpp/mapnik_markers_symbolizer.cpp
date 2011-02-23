@@ -26,11 +26,27 @@
 #include <mapnik/image_util.hpp>
 #include <mapnik/markers_symbolizer.hpp>
 #include <mapnik/parse_path.hpp>
+#include "mapnik_svg.hpp"
 
 using mapnik::markers_symbolizer;
 using mapnik::symbolizer_with_image;
 using mapnik::path_processor_type;
 using mapnik::parse_path;
+
+namespace  { 
+using namespace boost::python;
+
+std::string get_filename(mapnik::markers_symbolizer const& symbolizer) 
+{ 
+    return path_processor_type::to_string(*symbolizer.get_filename()); 
+} 
+
+void set_filename(mapnik::markers_symbolizer & symbolizer, std::string const& file_expr) 
+{ 
+    symbolizer.set_filename(parse_path(file_expr)); 
+} 
+
+}
 
 struct markers_symbolizer_pickle_suite : boost::python::pickle_suite
 {
@@ -67,21 +83,6 @@ struct markers_symbolizer_pickle_suite : boost::python::pickle_suite
 
 };
 
-namespace  
-{ 
-using namespace boost::python;
-
-std::string get_filename(mapnik::markers_symbolizer const& symbolizer) 
-{ 
-    return path_processor_type::to_string(*symbolizer.get_filename()); 
-} 
-
-void set_filename(mapnik::markers_symbolizer & symbolizer, std::string const& file_expr) 
-{ 
-    symbolizer.set_filename(parse_path(file_expr)); 
-} 
-
-}
 
 void export_markers_symbolizer()
 {
@@ -92,8 +93,8 @@ void export_markers_symbolizer()
         .def (init<mapnik::path_expression_ptr>("<path expression ptr>"))
         //.def_pickle(markers_symbolizer_pickle_suite())
         .add_property("filename",
-                      get_filename,
-                      set_filename)   
+                      &get_filename,
+                      &set_filename)   
         .add_property("allow_overlap",
                       &markers_symbolizer::get_allow_overlap,
                       &markers_symbolizer::set_allow_overlap)
@@ -107,5 +108,8 @@ void export_markers_symbolizer()
                       &markers_symbolizer::get_opacity,
                       &markers_symbolizer::set_opacity,
                       "Set/get the text opacity")
+        .add_property("transform",
+                      &mapnik::get_svg_transform<markers_symbolizer>,
+                      &mapnik::set_svg_transform<markers_symbolizer>)
         ;
 }

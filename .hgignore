@@ -1,4 +1,7 @@
 .*.pyc
+eggs
+src.mrdeveloper
+parts
 .*.egg-info
 \.installed\.cfg
 \.mr\.developer\.cfg

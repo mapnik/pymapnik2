@@ -10,6 +10,56 @@ import mapnik2, pickle
 # ShieldSymbolizer initialization
 def test_shieldsymbolizer_init():
     s = mapnik2.ShieldSymbolizer(mapnik2.Expression('[Field Name]'), 'DejaVu Sans Bold', 6, mapnik2.Color('#000000'), mapnik2.PathExpression('../data/images/dummy.png'))
+    eq_(s.anchor, (0.0,0.5,))
+    eq_(s.displacement, (0.0,0.0))
+    eq_(s.allow_overlap, False)
+    eq_(s.avoid_edges, False)
+    eq_(s.character_spacing,0)
+    eq_(str(s.name), str(mapnik2.Expression('[Field Name]')))
+    eq_(s.face_name, 'DejaVu Sans Bold')
+    eq_(s.allow_overlap, False)
+    eq_(s.fill, mapnik2.Color('#000000'))
+    eq_(s.force_odd_labels, False)
+    eq_(s.halo_fill, mapnik2.Color('rgb(255,255,255)'))
+    eq_(s.halo_radius, 0)
+    eq_(s.label_placement, mapnik2.label_placement.POINT_PLACEMENT)
+    eq_(s.minimum_distance, 0.0)
+    eq_(s.text_ratio, 0)
+    eq_(s.text_size, 6)
+    eq_(s.wrap_width, 0)
+    eq_(s.vertical_alignment, mapnik2.vertical_alignment.MIDDLE)
+    eq_(s.label_spacing, 0)
+    eq_(s.label_position_tolerance, 0)
+    # 25.0 * M_PI/180.0 initialized by default
+    assert_almost_equal(s.max_char_angle_delta, 0.43633231299858238)
+    
+    eq_(s.wrap_character, ' ')
+    eq_(s.text_transform, mapnik2.text_transform.NONE)
+    eq_(s.line_spacing, 0)
+    eq_(s.character_spacing, 0)
+    
+    # r1341
+    eq_(s.wrap_before, False)
+    eq_(s.horizontal_alignment, mapnik2.horizontal_alignment.MIDDLE)
+    eq_(s.justify_alignment, mapnik2.justify_alignment.MIDDLE)
+    eq_(s.opacity, 1.0)
+    
+    # r2300
+    eq_(s.minimum_padding, 0.0)
+    
+    # was mixed with s.opacity
+    eq_(s.text_opacity, 1.0)
+
+    eq_(s.shield_displacement, (0.0,0.0))
+    # TODO - the pattern in bindings seems to be to get/set
+    # strings for PathExpressions... should we pass objects?
+    eq_(s.filename, '../data/images/dummy.png')
+
+    eq_(s.transform, 'matrix(1, 0, 0, 1, 0, 0)')
+        
+    raise Todo("FontSet pickling support needed: http://trac.mapnik2.org/ticket/348")
+    eq_(s.fontset, '')
+
 
 # ShieldSymbolizer missing image file
 # images paths are now PathExpressions are evaluated at runtime
@@ -18,17 +68,39 @@ def test_shieldsymbolizer_init():
 #def test_shieldsymbolizer_missing_image():
 #    s = mapnik2.ShieldSymbolizer(mapnik2.Expression('[Field Name]'), 'DejaVu Sans Bold', 6, mapnik2.Color('#000000'), mapnik2.PathExpression('../#data/images/broken.png'))
 
+def test_polygonsymbolizer_init():
+    p = mapnik2.PolygonSymbolizer()
+
+    eq_(p.fill, mapnik2.Color('gray'))
+    eq_(p.fill_opacity, 1)
+    eq_(p.placement, mapnik2.point_placement.CENTROID)
+
+    p = mapnik2.PolygonSymbolizer(mapnik2.Color('blue'))
+    p.placement = mapnik2.point_placement.INTERIOR
+
+    eq_(p.fill, mapnik2.Color('blue'))
+    eq_(p.fill_opacity, 1)
+    eq_(p.placement, mapnik2.point_placement.INTERIOR)
+
 # PointSymbolizer initialization
 def test_pointsymbolizer_init():
     p = mapnik2.PointSymbolizer() 
     eq_(p.allow_overlap, False)
     eq_(p.opacity,1)
     eq_(p.filename,'')
+    eq_(p.ignore_placement,False)
+    eq_(p.placement, mapnik2.point_placement.CENTROID)
 
     p = mapnik2.PointSymbolizer(mapnik2.PathExpression("../data/images/dummy.png"))
-    eq_(p.allow_overlap, False)
-    eq_(p.opacity, 1)
+    p.allow_overlap = True
+    p.opacity = 0.5
+    p.ignore_placement = True
+    p.placement = mapnik2.point_placement.INTERIOR
+    eq_(p.allow_overlap, True)
+    eq_(p.opacity, 0.5)
     eq_(p.filename,'../data/images/dummy.png')
+    eq_(p.ignore_placement,True)
+    eq_(p.placement, mapnik2.point_placement.INTERIOR)
 
 # PointSymbolizer missing image file
 # images paths are now PathExpressions are evaluated at runtime
@@ -46,6 +118,8 @@ def test_pointsymbolizer_pickle():
     eq_(p.filename, p2.filename)
     eq_(p.allow_overlap, p2.allow_overlap)
     eq_(p.opacity, p2.opacity)
+    eq_(p.ignore_placement, p2.ignore_placement)
+    eq_(p.placement, p2.placement)
 
 # PolygonSymbolizer initialization
 def test_polygonsymbolizer_init():
@@ -79,12 +153,15 @@ def test_stroke_init():
     eq_(s.color, mapnik2.Color('black'))
     eq_(s.line_cap, mapnik2.line_cap.BUTT_CAP)
     eq_(s.line_join, mapnik2.line_join.MITER_JOIN)
+    eq_(s.gamma,1.0)
 
     s = mapnik2.Stroke(mapnik2.Color('blue'), 5.0)
+    s.gamma = .5
 
     eq_(s.width, 5)
     eq_(s.opacity, 1)
     eq_(s.color, mapnik2.Color('blue'))
+    eq_(s.gamma, .5)
     eq_(s.line_cap, mapnik2.line_cap.BUTT_CAP)
     eq_(s.line_join, mapnik2.line_join.MITER_JOIN)
 
@@ -193,6 +270,7 @@ def test_textsymbolizer_init():
     eq_(ts.face_name, 'Font Name')
     eq_(ts.text_size, 8)
     eq_(ts.fill, mapnik2.Color('black'))
+    eq_(ts.label_placement, mapnik2.label_placement.POINT_PLACEMENT)
 
 # TextSymbolizer pickling
 def test_textsymbolizer_pickle():
@@ -209,8 +287,8 @@ def test_textsymbolizer_pickle():
     eq_(ts.name, ts2.name)
     eq_(ts.face_name, ts2.face_name)
     eq_(ts.allow_overlap, ts2.allow_overlap)
-    eq_(ts.get_displacement(), ts2.get_displacement())
-    eq_(ts.get_anchor(), ts2.get_anchor())
+    eq_(ts.displacement, ts2.displacement)
+    eq_(ts.anchor, ts2.anchor)
     eq_(ts.fill, ts2.fill)
     eq_(ts.force_odd_labels, ts2.force_odd_labels)
     eq_(ts.halo_fill, ts2.halo_fill)
@@ -223,6 +301,8 @@ def test_textsymbolizer_pickle():
     eq_(ts.vertical_alignment, ts2.vertical_alignment)
     eq_(ts.label_spacing, ts2.label_spacing)
     eq_(ts.label_position_tolerance, ts2.label_position_tolerance)
+    # 25.0 * M_PI/180.0 initialized by default
+    assert_almost_equal(s.max_char_angle_delta, 0.43633231299858238)
     
     eq_(ts.wrap_character, ts2.wrap_character)
     eq_(ts.text_transform, ts2.text_transform)
@@ -234,6 +314,9 @@ def test_textsymbolizer_pickle():
     eq_(ts.horizontal_alignment, ts2.horizontal_alignment)
     eq_(ts.justify_alignment, ts2.justify_alignment)
     eq_(ts.opacity, ts2.opacity)
+
+    # r2300
+    eq_(s.minimum_padding, 0.0)
         
     raise Todo("FontSet pickling support needed: http://trac.mapnik2.org/ticket/348")
     eq_(ts.fontset, ts2.fontset)
@@ -461,6 +544,49 @@ def test_coord_multiplication():
 # Box2d initialization
 def test_envelope_init():
     e = mapnik2.Box2d(100, 100, 200, 200)
+
+    assert_true(e.contains(100, 100))
+    assert_true(e.contains(100, 200))
+    assert_true(e.contains(200, 200))
+    assert_true(e.contains(200, 100))
+
+    assert_true(e.contains(e.center()))
+    
+    assert_false(e.contains(99.9, 99.9))
+    assert_false(e.contains(99.9, 200.1))
+    assert_false(e.contains(200.1, 200.1))
+    assert_false(e.contains(200.1, 99.9))
+
+    eq_(e.width(), 100)
+    eq_(e.height(), 100)
+
+    eq_(e.minx, 100)
+    eq_(e.miny, 100)
+
+    eq_(e.maxx, 200)
+    eq_(e.maxy, 200)
+    
+    eq_(e[0],100)
+    eq_(e[1],100)
+    eq_(e[2],200)
+    eq_(e[3],200)
+    eq_(e[0],e[-4])
+    eq_(e[1],e[-3])
+    eq_(e[2],e[-2])
+    eq_(e[3],e[-1])
+    
+    c = e.center()
+
+    eq_(c.x, 150)
+    eq_(c.y, 150)
+
+# Box2d static initialization
+def test_envelope_static_init():
+    e = mapnik2.Box2d.from_string('100 100 200 200')
+    e2 = mapnik2.Box2d.from_string('100,100,200,200')
+    e3 = mapnik2.Box2d.from_string('100 , 100 , 200 , 200')
+    eq_(e,e2)
+    eq_(e,e3)
 
     assert_true(e.contains(100, 100))
     assert_true(e.contains(100, 200))

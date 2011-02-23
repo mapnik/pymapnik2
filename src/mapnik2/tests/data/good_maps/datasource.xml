@@ -1,15 +1,14 @@
-<!-- see: http://trac.mapnik.org/changeset/574 -->
-<Map background-color="steelblue" srs="+proj=longlat +ellps=airy +datum=OSGB36 +no_defs">
+<!-- see: http://trac.mapnik.org/changeset/574 --><Map background-color="steelblue" srs="+proj=longlat +ellps=airy +datum=OSGB36 +no_defs" minimum-version="0.7.2">
 
     <Style name="test">
       <Rule>
-         <PolygonSymbolizer />
+         <PolygonSymbolizer/>
       </Rule>
     </Style>
 
     <Datasource name="shp">
-    <Parameter name="type">shape</Parameter>
-    <Parameter name="base">../../data/shp/</Parameter>
+      <Parameter name="type">shape</Parameter>
+      <Parameter name="base">../../data/shp/</Parameter>
     </Datasource>
 
   <Layer name="lay" srs="+proj=longlat +ellps=airy +datum=OSGB36 +no_defs">

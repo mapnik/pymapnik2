@@ -26,12 +26,29 @@
 #include <mapnik/polygon_pattern_symbolizer.hpp>
 #include "mapnik_enumeration.hpp"
 #include <mapnik/parse_path.hpp>
+#include "mapnik_svg.hpp"
 
 using namespace mapnik;
 using mapnik::polygon_pattern_symbolizer;
 using mapnik::path_expression_ptr;
 using mapnik::path_processor_type;
+using mapnik::parse_path;
 using mapnik::guess_type;
+
+namespace {
+using namespace boost::python;
+
+const std::string get_filename(polygon_pattern_symbolizer const& t) 
+{ 
+    return path_processor_type::to_string(*t.get_filename()); 
+}
+
+void set_filename(polygon_pattern_symbolizer & t, std::string const& file_expr) 
+{ 
+    t.set_filename(parse_path(file_expr)); 
+}
+
+}
 
 struct polygon_pattern_symbolizer_pickle_suite : boost::python::pickle_suite
 {
@@ -82,6 +99,11 @@ void export_polygon_pattern_symbolizer()
               &polygon_pattern_symbolizer::get_alignment,
               &polygon_pattern_symbolizer::set_alignment,
               "Set/get the alignment of the pattern")
-
+        .add_property("transform",
+              mapnik::get_svg_transform<polygon_pattern_symbolizer>,
+              mapnik::set_svg_transform<polygon_pattern_symbolizer>)
+        .add_property("filename",
+                      &get_filename,
+                      &set_filename)
         ;    
 }

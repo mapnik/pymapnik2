@@ -24,11 +24,12 @@
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
+#include "mapnik_enumeration.hpp"
 #include <mapnik/feature_type_style.hpp>
 
 using mapnik::feature_type_style;
 using mapnik::rules;
-using mapnik::rule_type;
+using mapnik::rule;
 
 struct style_pickle_suite : boost::python::pickle_suite
 {
@@ -63,7 +64,7 @@ struct style_pickle_suite : boost::python::pickle_suite
         boost::python::list rules = extract<boost::python::list>(state[0]);
         for (int i=0; i<len(rules); ++i)
         {
-            s.add_rule(extract<rule_type>(rules[i]));
+            s.add_rule(extract<rule>(rules[i]));
         }
     }
    
@@ -72,6 +73,11 @@ struct style_pickle_suite : boost::python::pickle_suite
 void export_style()
 {
     using namespace boost::python;
+
+    mapnik::enumeration_<mapnik::filter_mode_e>("filter_mode")
+        .value("ALL",mapnik::FILTER_ALL)
+        .value("FIRST",mapnik::FILTER_FIRST)
+        ;
 
     class_<rules>("Rules",init<>("default ctor"))
         .def(vector_indexing_suite<rules>())
@@ -92,6 +98,10 @@ void export_style()
                       "<mapnik2._mapnik2.Rule object at 0x100549910>\n"
                       "<mapnik2._mapnik2.Rule object at 0x100549980>\n"
                    )
+        .add_property("filter_mode",
+                      &feature_type_style::get_filter_mode,
+                      &feature_type_style::set_filter_mode,
+                      "Set/get the placement of the label")
         ;
     
 }

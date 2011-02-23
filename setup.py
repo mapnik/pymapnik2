@@ -1,4 +1,5 @@
 import os
+import sys
 
 from setuptools import setup, find_packages, extension
 
@@ -25,12 +26,15 @@ install_requires=['setuptools',]
 test_requires = ['nose']
 for lib in compilation_flags['extra_link_args']:
     if 'cairo' in lib:
-        install_requires.append('pycairo')
+        dep = 'pycairo'
+        if sys.version_info[0] < 3:
+            dep = 'py2cairo'
+        install_requires.append(dep)
         break
 
 setup(
     name='mapnik2',
-    version= '0.7_r2271',
+    version= '0.7_r2615',
     description="Python bindings for mapnik",
     long_description=long_description,
     classifiers=[

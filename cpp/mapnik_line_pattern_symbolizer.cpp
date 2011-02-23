@@ -26,12 +26,29 @@
 #include <mapnik/line_pattern_symbolizer.hpp>
 #include <mapnik/parse_path.hpp>
 #include <mapnik/image_util.hpp>
+#include "mapnik_svg.hpp"
 
 using mapnik::line_pattern_symbolizer;
 using mapnik::path_processor_type;
 using mapnik::path_expression_ptr;
 using mapnik::guess_type;
+using mapnik::parse_path;
 
+
+namespace {
+using namespace boost::python;
+
+const std::string get_filename(line_pattern_symbolizer const& t) 
+{ 
+    return path_processor_type::to_string(*t.get_filename()); 
+}
+
+void set_filename(line_pattern_symbolizer & t, std::string const& file_expr) 
+{ 
+    t.set_filename(parse_path(file_expr)); 
+}
+
+}
 
 struct line_pattern_symbolizer_pickle_suite : boost::python::pickle_suite
 {
@@ -52,5 +69,11 @@ void export_line_pattern_symbolizer()
                                     init<path_expression_ptr>
                                     ("<image file expression>"))
         //.def_pickle(line_pattern_symbolizer_pickle_suite())
+        .add_property("transform",
+              mapnik::get_svg_transform<line_pattern_symbolizer>,
+              mapnik::set_svg_transform<line_pattern_symbolizer>)
+        .add_property("filename",
+                      &get_filename,
+                      &set_filename)
         ;    
 }

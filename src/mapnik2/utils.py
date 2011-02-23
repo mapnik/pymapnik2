@@ -64,7 +64,7 @@ def get_boost_flags():
             suffix = 'so'
             if sys.platform == 'cygwin':
                 prefix = 'cyg'
-            if 'win' in sys.platform:
+            if sys.platform.startswith('win'):
                 suffix = 'dll'
             pretendants = libraries_pretendants[p]
             while(len(pretendants)):

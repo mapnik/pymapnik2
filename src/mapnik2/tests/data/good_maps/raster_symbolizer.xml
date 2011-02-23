@@ -1,22 +1,35 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Map>
-  <Style name="elevation">
+<Map background-color="white" srs="+init=epsg:32630" minimum-version="0.7.2">
+
+  <Style name="two-value">
     <Rule>
-      <RasterSymbolizer>
+      <RasterSymbolizer opacity="1">
         <RasterColorizer>
-          <ColorBand value="-200" color="rgb(0,0,0)" label="&lt;0"></ColorBand>
-          <ColorBand value="0" color="rgb(0,60,20)" midpoints="199"></ColorBand>
-          <ColorBand value="100" color="rgb(0,200,10)" midpoints="199"></ColorBand>
-          <ColorBand value="300" color="rgb(234,234,10)" midpoints="199"></ColorBand>
-          <ColorBand value="500" color="rgb(214,185,10)" midpoints="199"></ColorBand>
-          <ColorBand value="700" color="rgb(195,136,20)" midpoints="199"></ColorBand>
-          <ColorBand value="900" color="rgb(175,88,29)" midpoints="199"></ColorBand>
-          <ColorBand value="1400" color="rgb(133,72,34)" midpoints="499"></ColorBand>
-          <ColorBand value="2500" color="rgb(200,200,200)" midpoints="1099"></ColorBand>
-          <ColorBand value="3400" color="rgb(255,255,255)" midpoints="999"></ColorBand>
-          <ColorBand value="10000" color="rgb(255,255,255)"></ColorBand>
-        </RasterColorizer>
+          <ColorBand value="0" color="yellow" label="&lt;0"/>
+          <ColorBand value="26" color="purple" midpoints="1"/>
+         </RasterColorizer>
       </RasterSymbolizer>
     </Rule>
   </Style>
+
+  <Style name="ramped">
+    <Rule>
+      <RasterSymbolizer>
+        <RasterColorizer>
+          <ColorBand value="0" color="red" label="&lt;0"/>
+          <ColorBand value="26" color="green" midpoints="100"/>
+         </RasterColorizer>
+      </RasterSymbolizer>
+    </Rule>
+  </Style>
+
+  <Layer name="dataraster" srs="+init=epsg:32630">
+      <StyleName>ramped</StyleName>
+      <Datasource>
+          <!-- get stats on this file with gdalinfo ../raster/dataraster.tif -stats -->
+          <Parameter name="file">../raster/dataraster.tif</Parameter>
+          <Parameter name="type">gdal</Parameter>
+          <Parameter name="band">1</Parameter>
+      </Datasource>
+  </Layer>
+
 </Map>

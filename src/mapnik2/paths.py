@@ -10,7 +10,7 @@ if not mapnik_config_executable:
     mapnik_config_executable = which('mapnik-config')
 
 if not inputpluginspath:
-    inputpluginspath = mapnik_config(['--plugins'])
+    inputpluginspath = mapnik_config(['--input-plugins'])
 
 if not fontscollectionpath:
     fontscollectionpath = mapnik_config(['--fonts'])
