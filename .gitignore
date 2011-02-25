@@ -1,4 +1,8 @@
 .*.pyc
+.minitage
+test.sh
+
+bin
 build
 src/*.so
 eggs
