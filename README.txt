@@ -21,6 +21,9 @@ Companies
 .. _makinacom:  http://www.makina-corpus.com
 
 Authors
+--------------- 
+
+Contributors
 ---------------
 
     - kiorky <kiorky@cryptelium.net>
