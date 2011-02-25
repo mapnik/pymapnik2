@@ -10,10 +10,8 @@ read = mapnik_utils['read']
 get_compilation_flags = mapnik_utils['get_compilation_flags']
 
 README = read(('README.txt',))
-INSTALL = read(('docs', 'INSTALL.txt'))
-RELEASE = read(('docs', 'RELEASE.txt'))
-CHANGELOG  = read(('docs', 'HISTORY.txt'))
-long_description = '\n'.join([README, INSTALL,  RELEASE, CHANGELOG])+'\n'
+CHANGELOG = read(('CHANGES.txt',))
+long_description = '\n'.join([README, CHANGELOG])+'\n'
 
 compilation_flags = get_compilation_flags()
 sources_dir = os.path.abspath('cpp')
@@ -32,9 +30,10 @@ for lib in compilation_flags['extra_link_args']:
         install_requires.append(dep)
         break
 
+version= '0.7_r2615'
 setup(
     name='mapnik2',
-    version= '0.7_r2615',
+    version = version,
     description="Python bindings for mapnik",
     long_description=long_description,
     classifiers=[
@@ -42,7 +41,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     keywords='',
-    author='Mathieu Pasquet',
+    author='Mathieu Le Marec - Pasquet & the mapnik community',
     author_email='kiorky@cryptelium.net',
     url='http://pypi.python.org/pypi/mapnik',
     license='LGPL',
