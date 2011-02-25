@@ -1,0 +1,17 @@
+.*.pyc
+eggs
+src.mrdeveloper
+parts
+.*.egg-info
+\.installed\.cfg
+\.mr\.developer\.cfg
+parts/.*
+sys/.*
+mapnik-.*/.*
+build.*/.*
+bin/.*
+.*\.env
+develop-eggs/*
+.*\.egg-link
+.*\.so
+
