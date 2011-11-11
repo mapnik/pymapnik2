@@ -1,4 +1,4 @@
-<Map srs="+init=epsg:4326" minimum-version="2.0.0">
+<Map srs="+init=epsg:4326" background-color="white" minimum-version="0.7.2">
 
     <Style name="1">
         <Rule>
@@ -18,13 +18,9 @@
     <Layer name="point" srs="+init=epsg:4326">
         <StyleName>1</StyleName>
         <Datasource>
-            <Parameter name="extent">-180,-70,180,70</Parameter>
-            <Parameter name="file">../sqlite/qgis_spatiallite.sqlite</Parameter>
-            <Parameter name="geometry_field">geometry</Parameter>
-            <Parameter name="key_field">pkuid</Parameter>
-            <Parameter name="table">point</Parameter>
             <Parameter name="type">sqlite</Parameter>
-            <Parameter name="use_spatial_index">1</Parameter>
+            <Parameter name="file">../sqlite/qgis_spatiallite.sqlite</Parameter>
+            <Parameter name="table">point</Parameter>
             <Parameter name="wkb_format">spatialite</Parameter>
         </Datasource>
     </Layer>

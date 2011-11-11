@@ -30,6 +30,7 @@
 #include <mapnik/layer.hpp>
 #include <mapnik/map.hpp>
 #include <mapnik/feature_type_style.hpp>
+#include <mapnik/metawriter_inmem.hpp>
 
 #include "mapnik_enumeration.hpp"
 #include "python_optional.hpp"
@@ -68,17 +69,17 @@ struct map_pickle_suite : boost::python::pickle_suite
             s.append(style_pair);
         }
 
-        return boost::python::make_tuple(m.get_current_extent(),m.background(),l,s);
+        return boost::python::make_tuple(m.get_current_extent(),m.background(),l,s,m.base_path());
     }
 
     static void
     setstate (Map& m, boost::python::tuple state)
     {
         using namespace boost::python;
-        if (len(state) != 4)
+        if (len(state) != 5)
         {
             PyErr_SetObject(PyExc_ValueError,
-                            ("expected 4-item tuple in call to __setstate__; got %s"
+                            ("expected 5-item tuple in call to __setstate__; got %s"
                              % state).ptr()
                 );
             throw_error_already_set();
@@ -106,6 +107,12 @@ struct map_pickle_suite : boost::python::pickle_suite
             mapnik::feature_type_style style = extract<mapnik::feature_type_style>(style_pair[1]);
             m.insert_style(name, style);
         }
+
+        if (state[4])
+        {
+            std::string base_path = extract<std::string>(state[4]);
+            m.set_base_path(base_path);
+        }    
     }
 };
 
@@ -129,6 +136,19 @@ bool has_metawriter(mapnik::Map const& m)
     if (m.metawriters().size() >=1)
         return true;
     return false;
+}
+
+// returns empty shared_ptr when the metawriter isn't found, or is 
+// of the wrong type. empty pointers make it back to Python as a None.
+mapnik::metawriter_inmem_ptr find_inmem_metawriter(const mapnik::Map &m, const std::string &name) {
+  mapnik::metawriter_ptr metawriter = m.find_metawriter(name);
+  mapnik::metawriter_inmem_ptr inmem;
+
+  if (metawriter) {
+    inmem = boost::dynamic_pointer_cast<mapnik::metawriter_inmem>(metawriter);
+  }
+ 
+  return inmem;
 }
 
 // TODO - we likely should allow indexing by negative number from python
@@ -421,6 +441,13 @@ void export_map()
             "\n"
             "Use a path like \"[z]/[x]/[y].json\" to create filenames.\n"
         )
+        .def("find_inmem_metawriter", find_inmem_metawriter,
+            (arg("name")),
+            "Gets an inmem metawriter, or None if no such metawriter "
+            "exists.\n"
+            "Use this after the map has been rendered to retrieve information "
+            "about the hit areas rendered on the map.\n"
+          )
         
         .def("extra_attributes",&Map::get_extra_attributes,return_value_policy<copy_const_reference>(),"TODO")
 
@@ -442,6 +469,16 @@ void export_map()
                       "\n"
                       "Usage:\n"
                       ">>> m.background = Color('steelblue')\n"
+            )
+
+        .add_property("base",
+                      make_function(&Map::base_path,return_value_policy<copy_const_reference>()),
+                      &Map::set_base_path,
+                      "The base path of the map where any files using relative \n"
+                      "paths will be interpreted as relative to.\n"
+                      "\n"
+                      "Usage:\n"
+                      ">>> m.base_path = '.'\n"
             )
         
         .add_property("buffer_size",
@@ -480,6 +517,15 @@ void export_map()
                       "<mapnik._mapnik.layers object at 0x6d458>"
                       ">>> m.layers[0]\n"
                       "<mapnik._mapnik.layer object at 0x5fe130>\n"
+            )
+
+        .add_property("maximum_extent",make_function
+                      (&Map::maximum_extent,return_value_policy<copy_const_reference>()),
+                      &Map::set_maximum_extent,
+                      "The maximum extent of the map.\n"
+                      "\n"
+                      "Usage:\n"
+                      ">>> m.maximum_extent = Box2d(-180,-90,180,90)\n"
             )
 
         .add_property("srs",

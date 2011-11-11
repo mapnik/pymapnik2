@@ -148,7 +148,7 @@ namespace agg
             unsigned cmd = v.vertex(i, &x, &y);
             add_vertex(x, y, cmd);
         }
-	    return *this;
+        return *this;
     }
 
     //------------------------------------------------------------------------
@@ -720,7 +720,8 @@ namespace agg
         template<class VertexSource> 
         void concat_path(VertexSource& vs, unsigned path_id = 0)
         {
-            double x, y;
+            double x=0;
+            double y=0;
             unsigned cmd;
             vs.rewind(path_id);
             while(!is_stop(cmd = vs.vertex(&x, &y)))
@@ -735,7 +736,7 @@ namespace agg
         template<class VertexSource> 
         void join_path(VertexSource& vs, unsigned path_id = 0)
         {
-            double x, y;
+            double x=0.0, y=0.0;
             unsigned cmd;
             vs.rewind(path_id);
             cmd = vs.vertex(&x, &y);

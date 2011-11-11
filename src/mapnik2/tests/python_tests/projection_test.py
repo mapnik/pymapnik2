@@ -6,6 +6,12 @@ import mapnik2, pickle
 
 # Tests that exercise map projections.
 
+def test_normalizing_definition():
+    p = mapnik2.Projection('+init=epsg:4326')
+    expanded = p.expanded()
+    eq_('+proj=longlat' in expanded,True)
+
+
 # Trac Ticket #128
 def test_wgs84_inverse_forward():
     p = mapnik2.Projection('+init=epsg:4326')
@@ -39,3 +45,6 @@ def test_wgs84_inverse_forward():
 
     assert_almost_equal(e.forward(p).center().y, e.center().y)
     assert_almost_equal(e.forward(p).center().x, e.center().x)
+
+if __name__ == "__main__":
+    [eval(run)() for run in dir() if 'test_' in run]

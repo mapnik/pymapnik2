@@ -210,7 +210,7 @@ namespace agg
         typedef Filter filter_type;
         typedef typename filter_type::color_type color_type;
         typedef line_image_pattern<Filter> base_type;
-	
+
         //--------------------------------------------------------------------
         line_image_pattern_pow2(const Filter& filter) :
             line_image_pattern<Filter>(filter), m_mask(line_subpixel_mask) {}
@@ -924,11 +924,11 @@ namespace agg
                                                   m_start, m_scale_x);
             if(li.vertical())
             {
-                while(li.step_ver());
+                while(li.step_ver()) ;
             }
             else
             {
-                while(li.step_hor());
+                while(li.step_hor()) ;
             }
             m_start += uround(lp.len / m_scale_x);
         }

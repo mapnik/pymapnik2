@@ -90,6 +90,7 @@ struct text_symbolizer_pickle_suite : boost::python::pickle_suite
         extras.append(t.get_justify_alignment());
         extras.append(t.get_text_opacity());
         extras.append(t.get_minimum_padding());
+        extras.append(t.get_minimum_path_length());
                 
         return boost::python::make_tuple(disp,t.get_label_placement(),
                t.get_vertical_alignment(),t.get_halo_radius(),t.get_halo_fill(),t.get_text_ratio(),
@@ -153,6 +154,7 @@ struct text_symbolizer_pickle_suite : boost::python::pickle_suite
         t.set_justify_alignment(extract<justify_alignment_e>(extras[6]));
         t.set_text_opacity(extract<double>(extras[7]));
         t.set_minimum_padding(extract<double>(extras[8]));
+        t.set_minimum_path_length(extract<double>(extras[9]));
     }
 };
 
@@ -168,9 +170,10 @@ void export_text_symbolizer()
         .value("INTERIOR_PLACEMENT",INTERIOR_PLACEMENT)
         ;
     enumeration_<vertical_alignment_e>("vertical_alignment")
-        .value("TOP",TOP)
-        .value("MIDDLE",MIDDLE)
-        .value("BOTTOM",BOTTOM)
+        .value("TOP",V_TOP)
+        .value("MIDDLE",V_MIDDLE)
+        .value("BOTTOM",V_BOTTOM)
+        .value("AUTO",V_AUTO)
         ;
 
     enumeration_<horizontal_alignment_e>("horizontal_alignment")
@@ -275,6 +278,9 @@ void export_text_symbolizer()
         .add_property("minimum_padding",
                       &text_symbolizer::get_minimum_padding,
                       &text_symbolizer::set_minimum_padding)
+        .add_property("minimum_path_length",
+                      &text_symbolizer::get_minimum_path_length,
+                      &text_symbolizer::set_minimum_path_length)
         .add_property("name",&text_symbolizer::get_name,
                       &text_symbolizer::set_name)
         .add_property("opacity",
