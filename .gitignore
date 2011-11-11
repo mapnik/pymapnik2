@@ -4,6 +4,7 @@ test.sh
 
 bin
 build
+dist
 src/*.so
 eggs
 src.mrdeveloper
