@@ -28,10 +28,13 @@
 #include <boost/python/tuple.hpp>
 #include <boost/python.hpp>
 #include <boost/scoped_array.hpp>
+
 // mapnik
 #include <mapnik/feature.hpp>
 #include <mapnik/datasource.hpp>
 #include <mapnik/wkb.hpp>
+#include <mapnik/wkt/wkt_factory.hpp>
+#include "mapnik_value_converter.hpp"
 
 mapnik::geometry_type & (mapnik::Feature::*get_geom1)(unsigned) = &mapnik::Feature::get_geometry;
 
@@ -39,54 +42,23 @@ namespace {
 
 using mapnik::Feature;
 using mapnik::geometry_utils;
+using mapnik::from_wkt;
 
-void feature_add_wkb_geometry(Feature &feature, std::string wkb)
+void feature_add_geometries_from_wkb(Feature &feature, std::string wkb)
 {
-    geometry_utils::from_wkb(feature, wkb.c_str(), wkb.size(), true);
+    geometry_utils::from_wkb(feature.paths(), wkb.c_str(), wkb.size(), true);
+}
+
+void feature_add_geometries_from_wkt(Feature &feature, std::string wkt)
+{
+    bool result = mapnik::from_wkt(wkt, feature.paths());
+    if (!result) throw std::runtime_error("Failed to parse WKT");
 }
 
 } // end anonymous namespace
 
 namespace boost { namespace python {
-    struct value_converter : public boost::static_visitor<PyObject*>
-    {
-        PyObject * operator() (int val) const
-        {
-#if PY_VERSION_HEX >= 0x03000000
-            return ::PyLong_FromLong(val);
-#else
-            return ::PyInt_FromLong(val);
-#endif
-        }
-            
-        PyObject * operator() (double val) const
-        {
-            return ::PyFloat_FromDouble(val);
-        }
-            
-        PyObject * operator() (UnicodeString const& s) const
-        {
-            std::string buffer;
-            mapnik::to_utf8(s,buffer);
-            PyObject *obj = Py_None;
-            obj = ::PyUnicode_DecodeUTF8(buffer.c_str(),implicit_cast<ssize_t>(buffer.length()),0);                
-            return obj;
-        }
-            
-        PyObject * operator() (mapnik::value_null const& s) const
-        {
-            return NULL;
-        }
-    };
-      
-    struct mapnik_value_to_python
-    {
-        static PyObject* convert(mapnik::value const& v)
-        {
-            return boost::apply_visitor(value_converter(),v.base());
-        }
-    };
-      
+
 // Forward declaration
     template <class Container, bool NoProxy, class DerivedPolicies>
     class map_indexing_suite2;
@@ -123,7 +95,7 @@ namespace boost { namespace python {
 
         template <class Class>
         static void
-        extension_def(Class& cl)
+        extension_def(Class& /*cl*/)
         {
                
         }
@@ -280,16 +252,18 @@ void export_feature()
     implicitly_convertible<bool,mapnik::value>();
 
     std_pair_to_python_converter<std::string const,mapnik::value>();
-    to_python_converter<mapnik::value,mapnik_value_to_python>();
     UnicodeString_from_python_str();
    
     class_<Feature,boost::shared_ptr<Feature>,
         boost::noncopyable>("Feature",init<int>("Default ctor."))
         .def("id",&Feature::id)
         .def("__str__",&Feature::to_string)
-        .def("add_geometry", &feature_add_wkb_geometry)
-        .def("num_geometries",&Feature::num_geometries)
-        .def("get_geometry", make_function(get_geom1,return_value_policy<reference_existing_object>()))
+        .def("add_geometries_from_wkb", &feature_add_geometries_from_wkb)
+        .def("add_geometries_from_wkt", &feature_add_geometries_from_wkt)
+        //.def("add_geometry", add_geometry)
+        //.def("num_geometries",&Feature::num_geometries)
+        //.def("get_geometry", make_function(get_geom1,return_value_policy<reference_existing_object>()))
+        .def("geometries",make_function(&Feature::paths,return_value_policy<reference_existing_object>()))
         .def("envelope", &Feature::envelope)
         .def(map_indexing_suite2<Feature, true >())
         .def("iteritems",iterator<Feature> ())

@@ -31,7 +31,7 @@
 
 
 
-w="${1:-../../dependencies/mapnik-0.7/mapnik-0.7-r2271}"
+w="${1:-../../Source/mapnik}"
 frsync() {
     echo rsync $@
     rsync $@
@@ -39,14 +39,14 @@ frsync() {
 
 # refresh code
 frsync -a  $w/bindings/python/*pp cpp/
-frsync -a --exclude=.svn ${w}/agg/include/ agg/include/
+frsync -a  ${w}/deps//agg/include/ agg/include/
 # refresh tests
-frsync -a --exclude=.svn ${w}/tests/python_tests/ src/mapnik2/tests/python_tests/
+frsync -a  ${w}/tests/python_tests/ src/mapnik2/tests/python_tests/
 for i in $(find src/mapnik2/tests/ -name '*.py');do
     #sed -re "s/\.\.\/data/\.\/data/g" -i $i
     sed -re "s/from utilities/from mapnik2.tests.python_tests.utilities/g" -i $i
 done
 # refresh test resources
-frsync -a --delete --exclude=.svn ${w}/tests/data/ src/mapnik2/tests/data/
+frsync -a --delete  ${w}/tests/data/ src/mapnik2/tests/data/
 
 # vim:set et sts=4 ts=4 tw=0:

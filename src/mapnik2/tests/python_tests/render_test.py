@@ -1,9 +1,19 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from nose.tools import *
 
 import os, mapnik2
+from nose.tools import *
+
+from mapnik2.tests.python_tests.utilities import execution_path
 from mapnik2.tests.python_tests.utilities import Todo
+
+def setup():
+    # All of the paths used are relative, if we run the tests
+    # from another directory we need to chdir()
+    os.chdir(execution_path('.'))
+
 
 def test_simplest_render():
     m = mapnik2.Map(256, 256)
@@ -76,59 +86,143 @@ def get_paired_images(w,h,mapfile):
     return i,i2    
 
 def test_render_from_serialization():
-    i,i2 = get_paired_images(100,100,'../data/good_maps/building_symbolizer.xml')
-    eq_(i.tostring(),i2.tostring())
+    try:
+        i,i2 = get_paired_images(100,100,'../data/good_maps/building_symbolizer.xml')
+        eq_(i.tostring(),i2.tostring())
+    
+        i,i2 = get_paired_images(100,100,'../data/good_maps/polygon_symbolizer.xml')
+        eq_(i.tostring(),i2.tostring())
+    except RuntimeError, e:
+        # only test datasources that we have installed
+        if not 'Could not create datasource' in str(e):
+            raise RuntimeError(e)
 
-    i,i2 = get_paired_images(100,100,'../data/good_maps/polygon_symbolizer.xml')
-    eq_(i.tostring(),i2.tostring())
+grid_correct = {"keys": ["", "North West", "North East", "South West", "South East"], "data": {"South East": {"Name": "South East"}, "North East": {"Name": "North East"}, "North West": {"Name": "North West"}, "South West": {"Name": "South West"}}, "grid": ["                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "         !!!                                 ###                ", "        !!!!!                               #####               ", "        !!!!!                               #####               ", "         !!!                                 ###                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "        $$$$                                %%%%                ", "        $$$$$                               %%%%%               ", "        $$$$$                               %%%%%               ", "         $$$                                 %%%                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                ", "                                                                "]}
 
+
+def resolve(grid,x,y):
+    """ Resolve the attributes for a given pixel in a grid.
+    
+    js version: 
+      https://github.com/mapbox/mbtiles-spec/blob/master/1.1/utfgrid.md
+    spec:
+      https://github.com/mapbox/wax/blob/master/control/lib/gridutil.js
+    
+    """
+    utf_val = grid['grid'][x][y]
+    #http://docs.python.org/library/functions.html#ord
+    codepoint = ord(utf_val)
+    if (codepoint >= 93):
+        codepoint-=1
+    if (codepoint >= 35):
+        codepoint-=1
+    codepoint -= 32
+    key = grid['keys'][codepoint]
+    return grid['data'].get(key)
+
+
+def test_render_grid():
+    places_ds = mapnik2.PointDatasource()
+    places_ds.add_point(143.10,-38.60,'Name','South East')
+    places_ds.add_point(142.48,-38.60,'Name','South West')
+    places_ds.add_point(142.48,-38.38,'Name','North West')
+    places_ds.add_point(143.10,-38.38,'Name','North East')
+    s = mapnik2.Style()
+    r = mapnik2.Rule()
+    #symb = mapnik2.PointSymbolizer()
+    symb = mapnik2.MarkersSymbolizer()
+    symb.allow_overlap = True
+    r.symbols.append(symb)
+    label = mapnik2.TextSymbolizer(mapnik2.Expression('[Name]'),
+                'DejaVu Sans Book',
+                10,
+                mapnik2.Color('black')
+                )
+    label.allow_overlap = True
+    label.displacement = (0,-10)
+    #r.symbols.append(label)
+
+    s.rules.append(r)
+    lyr = mapnik2.Layer('Places')
+    lyr.datasource = places_ds
+    lyr.styles.append('places_labels')
+    m = mapnik2.Map(256,256)
+    m.append_style('places_labels',s)
+    m.layers.append(lyr)
+    ul_lonlat = mapnik2.Coord(142.30,-38.20)
+    lr_lonlat = mapnik2.Coord(143.40,-38.80)
+    m.zoom_to_box(mapnik2.Box2d(ul_lonlat,lr_lonlat))
+    grid = mapnik2.render_grid(m,0,key='Name',resolution=4,fields=['Name'])
+    eq_(grid,grid_correct)
+    eq_(resolve(grid,0,0),None)
+    
+    # check every pixel of the nw symbol
+    expected = {"Name": "North West"}
+    
+    # top row
+    eq_(resolve(grid,23,9),expected)
+    eq_(resolve(grid,23,10),expected)
+    eq_(resolve(grid,23,11),expected)
+
+    # core
+    eq_(resolve(grid,24,8),expected)
+    eq_(resolve(grid,24,9),expected)
+    eq_(resolve(grid,24,10),expected)
+    eq_(resolve(grid,24,11),expected)
+    eq_(resolve(grid,24,12),expected)
+    eq_(resolve(grid,25,8),expected)
+    eq_(resolve(grid,25,9),expected)
+    eq_(resolve(grid,25,10),expected)
+    eq_(resolve(grid,25,11),expected)
+    eq_(resolve(grid,25,12),expected)
+    
+    # bottom row
+    eq_(resolve(grid,26,9),expected)
+    eq_(resolve(grid,26,10),expected)
+    eq_(resolve(grid,26,11),expected)
+    
 def test_render_points():
-	# Test for effectivenes of ticket #402 (borderline points get lost on reprojection)
-	raise Todo("See: http://trac.mapnik2.org/ticket/402")
-	
-	if not mapnik2.has_pycairo(): return
 
-	# create and populate point datasource (WGS84 lat-lon coordinates)
-	places_ds = mapnik2.PointDatasource()
-	places_ds.add_point(142.48,-38.38,'Name','Westernmost Point') # westernmost
-	places_ds.add_point(143.10,-38.60,'Name','Southernmost Point') # southernmost
-	# create layer/rule/style
-	s = mapnik2.Style()
-	r = mapnik2.Rule()
-	symb = mapnik2.PointSymbolizer()
-	symb.allow_overlap = True
-	r.symbols.append(symb)
-	s.rules.append(r)
-	lyr = mapnik2.Layer('Places','+proj=latlon +datum=WGS84')
-	lyr.datasource = places_ds
-	lyr.styles.append('places_labels')
-	# latlon bounding box corners
-	ul_lonlat = mapnik2.Coord(142.30,-38.20)
-	lr_lonlat = mapnik2.Coord(143.40,-38.80)
-	# render for different projections 
-	projs = { 
-		'latlon': '+proj=latlon +datum=WGS84',
-		'merc': '+proj=merc +datum=WGS84 +k=1.0 +units=m +over +no_defs',
-		'google': '+proj=merc +ellps=sphere +R=6378137 +a=6378137 +units=m',
-		'utm': '+proj=utm +zone=54 +datum=WGS84'
-		}
-	from cairo import SVGSurface
-	for projdescr in projs.iterkeys():
-		m = mapnik2.Map(1000, 500, projs[projdescr])
-		m.append_style('places_labels',s)
-		m.layers.append(lyr)
-		p = mapnik2.Projection(projs[projdescr])
-		m.zoom_to_box(p.forward(mapnik2.Box2d(ul_lonlat,lr_lonlat)))
-		# Render to SVG so that it can be checked how many points are there with string comparison
-		import StringIO
-		svg_memory_file = StringIO.StringIO()
-		surface = SVGSurface(svg_memory_file, m.width, m.height)
-		mapnik2.render(m, surface)
-		surface.flush()
-		surface.finish()
-		svg = svg_memory_file.getvalue()
-		svg_memory_file.close()
-		num_points_present = len(places_ds.all_features())
-		num_points_rendered = svg.count('<image ')
-		eq_(num_points_present, num_points_rendered, "Not all points were rendered (%d instead of %d) at projection %s" % (num_points_rendered, num_points_present, projdescr)) 
+    if not mapnik2.has_cairo(): return
 
+    # create and populate point datasource (WGS84 lat-lon coordinates)
+    places_ds = mapnik2.PointDatasource()
+    places_ds.add_point(142.48,-38.38,'Name','Westernmost Point') # westernmost
+    places_ds.add_point(143.10,-38.60,'Name','Southernmost Point') # southernmost
+    # create layer/rule/style
+    s = mapnik2.Style()
+    r = mapnik2.Rule()
+    symb = mapnik2.PointSymbolizer()
+    symb.allow_overlap = True
+    r.symbols.append(symb)
+    s.rules.append(r)
+    lyr = mapnik2.Layer('Places','+proj=latlon +datum=WGS84')
+    lyr.datasource = places_ds
+    lyr.styles.append('places_labels')
+    # latlon bounding box corners
+    ul_lonlat = mapnik2.Coord(142.30,-38.20)
+    lr_lonlat = mapnik2.Coord(143.40,-38.80)
+    # render for different projections 
+    projs = { 
+        'latlon': '+proj=latlon +datum=WGS84',
+        'merc': '+proj=merc +datum=WGS84 +k=1.0 +units=m +over +no_defs',
+        'google': '+proj=merc +ellps=sphere +R=6378137 +a=6378137 +units=m',
+        'utm': '+proj=utm +zone=54 +datum=WGS84'
+        }
+    for projdescr in projs.iterkeys():
+        m = mapnik2.Map(1000, 500, projs[projdescr])
+        m.append_style('places_labels',s)
+        m.layers.append(lyr)
+        p = mapnik2.Projection(projs[projdescr])
+        m.zoom_to_box(p.forward(mapnik2.Box2d(ul_lonlat,lr_lonlat)))
+        # Render to SVG so that it can be checked how many points are there with string comparison
+        svg_file = '/tmp/%s.svg'
+        mapnik2.render_to_file(m, svg_file)
+        num_points_present = len(places_ds.all_features())
+        svg = open(svg_file,'r').read()
+        num_points_rendered = svg.count('<image ')
+        eq_(num_points_present, num_points_rendered, "Not all points were rendered (%d instead of %d) at projection %s" % (num_points_rendered, num_points_present, projdescr)) 
+
+if __name__ == "__main__":
+    setup()
+    [eval(run)() for run in dir() if 'test_' in run]

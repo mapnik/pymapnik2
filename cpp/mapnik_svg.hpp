@@ -37,13 +37,13 @@ template <class T>
 const std::string get_svg_transform(T& symbolizer)
 {
     return symbolizer.get_transform_string();
-};
+}
 
 template <class T>
 void set_svg_transform(T& symbolizer, std::string const& transform_wkt)
 {
     agg::trans_affine tr;
-    if (!mapnik::svg::parse_transform(transform_wkt, tr))
+    if (!mapnik::svg::parse_transform(transform_wkt.c_str(), tr))
     {
         std::stringstream ss;
         ss << "Could not parse transform from '" << transform_wkt << "', expected string like: 'matrix(1, 0, 0, 1, 0, 0)'";
@@ -52,7 +52,7 @@ void set_svg_transform(T& symbolizer, std::string const& transform_wkt)
     mapnik::transform_type matrix;
     tr.store_to(&matrix[0]);
     symbolizer.set_transform(matrix);
-};
+}
 
 } // end of namespace mapnik
 

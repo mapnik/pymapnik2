@@ -8,13 +8,13 @@
         <Rule>
             <!-- Text using interior point -->
             <!-- Using normal centroid algorithm -->
-            <TextSymbolizer dy="2" name="'interior point'" placement="interior" face-name="DejaVu Sans Book" halo-radius="2" allow-overlap="true"/>
+            <TextSymbolizer dy="2" placement="interior" face-name="DejaVu Sans Book" halo-radius="2" allow-overlap="true">'interior point'</TextSymbolizer>
             <PointSymbolizer placement="interior" allow-overlap="true"/>
         </Rule>
         <Rule>
             <!-- Text using interior point -->
             <!-- Using normal centroid algorithm -->
-            <TextSymbolizer dy="-2" name="'centroid'" face-name="DejaVu Sans Book" halo-radius="2" allow-overlap="true"/>
+            <TextSymbolizer dy="-2" face-name="DejaVu Sans Book" halo-radius="2" allow-overlap="true">'centroid'</TextSymbolizer>
             <PointSymbolizer allow-overlap="true"/>
         </Rule>
     </Style>
@@ -22,14 +22,9 @@
     <Layer name="multipolygon" srs="+init=epsg:4326">
         <StyleName>multipolygon_style</StyleName>
         <Datasource>
-            <Parameter name="extent">-120.714996709,-60.7304861311,140.581413391,86.9753066091</Parameter>
-            <Parameter name="file">../sqlite/qgis_spatiallite.sqlite</Parameter>
-            <Parameter name="geometry_field">geometry</Parameter>
-            <Parameter name="key_field">pkuid</Parameter>
-            <Parameter name="table">multipolygon</Parameter>
             <Parameter name="type">sqlite</Parameter>
-            <Parameter name="use_spatial_index">1</Parameter>
-            <Parameter name="wkb_format">spatialite</Parameter>
+            <Parameter name="file">../sqlite/qgis_spatiallite.sqlite</Parameter>
+            <Parameter name="table">multipolygon</Parameter>
         </Datasource>
     </Layer>
 </Map>

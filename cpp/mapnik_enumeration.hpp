@@ -42,10 +42,11 @@ public:
     {
         init();
     }
-    enumeration_(const char * python_alias, const char * doc) :
 #if BOOST_VERSION >= 103500
+    enumeration_(const char * python_alias, const char * doc) :
         base_type( python_alias, doc )
 #else
+    enumeration_(const char * python_alias, const char * /*doc*/) :
         // Boost.Python < 1.35.0 doesn't support
         // docstrings for enums so we ignore it.
         base_type( python_alias )
@@ -77,7 +78,7 @@ private:
 
         for (unsigned i = 0; i < EnumWrapper::MAX; ++i)
         {
-            // Register the strings allready defined for this enum.
+            // Register the strings already defined for this enum.
             base_type::value( EnumWrapper::get_string( i ), native_type( i ) );
         }
     }

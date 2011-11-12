@@ -1,11 +1,24 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+import os
 from nose.tools import *
+from mapnik2.tests.python_tests.utilities import execution_path
 from mapnik2.tests.python_tests.utilities import Todo
 
 import mapnik2, pickle
 
+def setup():
+    # All of the paths used are relative, if we run the tests
+    # from another directory we need to chdir()
+    os.chdir(execution_path('.'))
+
 # Tests that exercise the functionality of Mapnik classes.
+
+# LineSymbolizer initialization
+def test_line_symbolizer_init():
+    s = mapnik2.LineSymbolizer()
+    eq_(s.rasterizer, mapnik2.line_rasterizer.FULL)
 
 # ShieldSymbolizer initialization
 def test_shieldsymbolizer_init():
@@ -30,8 +43,8 @@ def test_shieldsymbolizer_init():
     eq_(s.vertical_alignment, mapnik2.vertical_alignment.MIDDLE)
     eq_(s.label_spacing, 0)
     eq_(s.label_position_tolerance, 0)
-    # 25.0 * M_PI/180.0 initialized by default
-    assert_almost_equal(s.max_char_angle_delta, 0.43633231299858238)
+    # 22.5 * M_PI/180.0 initialized by default
+    assert_almost_equal(s.max_char_angle_delta, 0.39269908169872414)
     
     eq_(s.wrap_character, ' ')
     eq_(s.text_transform, mapnik2.text_transform.NONE)
@@ -234,33 +247,6 @@ def test_linesymbolizer_pickle():
     eq_(s.line_cap, s2.line_cap)
     eq_(s.line_join, s2.line_join)
 
-# Shapefile initialization
-def test_shapefile_init():
-    s = mapnik2.Shapefile(file='../../demo/data/boundaries')
-
-    e = s.envelope()
-   
-    assert_almost_equal(e.minx, -11121.6896651, places=7)
-    assert_almost_equal(e.miny, -724724.216526, places=6)
-    assert_almost_equal(e.maxx, 2463000.67866, places=5)
-    assert_almost_equal(e.maxy, 1649661.267, places=3)
-
-# Shapefile properties
-def test_shapefile_properties():
-    s = mapnik2.Shapefile(file='../../demo/data/boundaries', encoding='latin1')
-    f = s.features_at_point(s.envelope().center()).features[0]
-
-    eq_(f['CGNS_FID'], u'6f733341ba2011d892e2080020a0f4c9')
-    eq_(f['COUNTRY'], u'CAN')
-    eq_(f['F_CODE'], u'FA001')
-    eq_(f['NAME_EN'], u'Quebec')
-    eq_(f['NOM_FR'], u'Qu\xe9bec')
-    eq_(f['Shape_Area'], 1512185733150.0)
-    eq_(f['Shape_Leng'], 19218883.724300001)
-
-    # Check that the deprecated interface still works,
-    # remove me once the deprecated code is cleaned up
-    eq_(f.properties['Shape_Leng'], 19218883.724300001)
 
 # TextSymbolizer initialization
 def test_textsymbolizer_init():
@@ -301,8 +287,8 @@ def test_textsymbolizer_pickle():
     eq_(ts.vertical_alignment, ts2.vertical_alignment)
     eq_(ts.label_spacing, ts2.label_spacing)
     eq_(ts.label_position_tolerance, ts2.label_position_tolerance)
-    # 25.0 * M_PI/180.0 initialized by default
-    assert_almost_equal(s.max_char_angle_delta, 0.43633231299858238)
+    # 22.5 * M_PI/180.0 initialized by default
+    assert_almost_equal(s.max_char_angle_delta, 0.39269908169872414)
     
     eq_(ts.wrap_character, ts2.wrap_character)
     eq_(ts.text_transform, ts2.text_transform)
@@ -323,22 +309,35 @@ def test_textsymbolizer_pickle():
 
 
 # Map initialization
+def test_layer_init():
+    l = mapnik2.Layer('test')
+    eq_(l.name,'test')
+    eq_(l.envelope(),mapnik2.Box2d())
+    eq_(l.clear_label_cache,False)
+    eq_(l.cache_features,False)
+    eq_(l.visible(1),True)
+    eq_(l.abstract,'')
+    eq_(l.active,True)
+    eq_(l.datasource,None)
+    eq_(l.queryable,False)
+    eq_(l.srs,'+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+    eq_(l.title,'')
+
+# Map initialization
 def test_map_init():
     m = mapnik2.Map(256, 256)
    
     eq_(m.width, 256)
     eq_(m.height, 256)
     eq_(m.srs, '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+    eq_(m.base, '')
 
     m = mapnik2.Map(256, 256, '+proj=latlong')
-    
-    eq_(m.width, 256)
-    eq_(m.height, 256)
     eq_(m.srs, '+proj=latlong')
 
 # Map initialization from string
 def test_map_init_from_string():
-    map_string = '''<Map background-color="steelblue" srs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs">
+    map_string = '''<Map background-color="steelblue" base="./" srs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs">
      <Style name="My Style">
       <Rule>
        <PolygonSymbolizer>
@@ -360,11 +359,25 @@ def test_map_init_from_string():
     </Map>'''
 
     m = mapnik2.Map(600, 300)
-    
-    mapnik2.load_map_from_string(m, map_string)
-    mapnik2.load_map_from_string(m, map_string, False, "")
-    mapnik2.load_map_from_string(m, map_string, True, "")
-    raise(Todo("Need to write more map property tests in 'object_test.py'..."))
+    eq_(m.base, '')
+    try:
+        mapnik2.load_map_from_string(m, map_string)
+        eq_(m.base, './')
+        mapnik2.load_map_from_string(m, map_string, False, "") # this "" will have no effect
+        eq_(m.base, './')
+        try:
+            mapnik2.load_map_from_string(m, map_string, False, "/tmp")
+        except RuntimeError:
+            pass # runtime error expected because shapefile path should be wrong and datasource will throw
+        eq_(m.base, '/tmp') # /tmp will be set despite the exception because load_map mostly worked
+        m.base = 'foo'
+        mapnik2.load_map_from_string(m, map_string, True, ".")
+        eq_(m.base, '.')
+        raise(Todo("Need to write more map property tests in 'object_test.py'..."))
+    except RuntimeError, e:
+        # only test datasources that we have installed
+        if not 'Could not create datasource' in str(e):
+            raise RuntimeError(e)
 
 # Map pickling
 def test_map_pickle():
@@ -380,6 +393,15 @@ def test_map_pickle():
     eq_(pickle.loads(pickle.dumps(m)), m)
 
 # Color initialization
+
+@raises(Exception) # Boost.Python.ArgumentError
+def test_color_init_errors():
+    c = mapnik2.Color()
+
+@raises(RuntimeError)
+def test_color_init_errors():
+    c = mapnik2.Color('foo') # mapnik config 
+
 def test_color_init():
     c = mapnik2.Color('blue')
 
@@ -424,14 +446,16 @@ def test_color_init():
     eq_(c.g, 64)
     eq_(c.b, 128)
 
-    eq_(c.to_hex_string(), '#004080')
+    eq_(c.to_hex_string(), '#004080c0')
 
 # Color equality
 def test_color_equality():
+    
     c1 = mapnik2.Color('blue')
-    c2 = mapnik2.Color('blue')
+    c2 = mapnik2.Color(0,0,255)
     c3 = mapnik2.Color('black')
-
+    
+    
     c3.r = 0
     c3.g = 0
     c3.b = 255
@@ -443,7 +467,7 @@ def test_color_equality():
     c1 = mapnik2.Color(0, 64, 128)
     c2 = mapnik2.Color(0, 64, 128)
     c3 = mapnik2.Color(0, 0, 0)
-
+    
     c3.r = 0
     c3.g = 64
     c3.b = 128
@@ -467,11 +491,20 @@ def test_color_equality():
     c2 = mapnik2.Color(128, 128, 128, 255)
     c3 = mapnik2.Color('#808080')
     c4 = mapnik2.Color('gray')
-
+    
     eq_(c1, c2)
     eq_(c1, c3)
     eq_(c1, c4)
-
+    
+    c1 = mapnik2.Color('hsl(0, 100%, 50%)')   # red
+    c2 = mapnik2.Color('hsl(120, 100%, 50%)') # lime
+    c3 = mapnik2.Color('hsla(240, 100%, 50%, 0.5)') # semi-transparent solid blue
+    
+    eq_(c1, mapnik2.Color('red'))
+    eq_(c2, mapnik2.Color('lime'))
+    eq_(c3, mapnik2.Color(0,0,255,128))
+    
+    
 # Color pickling
 def test_color_pickle():
     c = mapnik2.Color('blue')
@@ -497,6 +530,20 @@ def test_rule_init():
     eq_(r.title, '')
     eq_(r.min_scale, 0)
     eq_(r.max_scale, float('inf'))
+    eq_(r.has_else(), False)
+    eq_(r.has_also(), False)
+    
+    r = mapnik2.Rule()
+    
+    r.set_else(True)
+    eq_(r.has_else(), True)
+    eq_(r.has_also(), False)
+    
+    r = mapnik2.Rule()
+    
+    r.set_also(True)
+    eq_(r.has_else(), False)
+    eq_(r.has_also(), True)
     
     r = mapnik2.Rule("Name")
     
@@ -504,6 +551,8 @@ def test_rule_init():
     eq_(r.title, '')
     eq_(r.min_scale, 0)
     eq_(r.max_scale, float('inf'))
+    eq_(r.has_else(), False)
+    eq_(r.has_also(), False)
     
     r = mapnik2.Rule("Name", "Title")
     
@@ -511,6 +560,8 @@ def test_rule_init():
     eq_(r.title, 'Title')
     eq_(r.min_scale, 0)
     eq_(r.max_scale, float('inf'))
+    eq_(r.has_else(), False)
+    eq_(r.has_also(), False)
     
     r = mapnik2.Rule("Name", "Title", min_scale)
     
@@ -518,6 +569,8 @@ def test_rule_init():
     eq_(r.title, 'Title')
     eq_(r.min_scale, min_scale)
     eq_(r.max_scale, float('inf'))
+    eq_(r.has_else(), False)
+    eq_(r.has_also(), False)
     
     r = mapnik2.Rule("Name", "Title", min_scale, max_scale)
     
@@ -525,6 +578,8 @@ def test_rule_init():
     eq_(r.title, 'Title')
     eq_(r.min_scale, min_scale)
     eq_(r.max_scale, max_scale)
+    eq_(r.has_else(), False)
+    eq_(r.has_also(), False)
     
 # Coordinate initialization
 def test_coord_init():
@@ -659,3 +714,26 @@ def test_envelope_multiplication():
 
     eq_(c.x, 150)
     eq_(c.y, 150)
+
+# Box2d clipping
+def test_envelope_pickle():
+    e1 = mapnik2.Box2d(-180,-90,180,90)
+    e2 = mapnik2.Box2d(-120,40,-110,48)
+    e1.clip(e2)
+    eq_(e1,e2)
+    
+    # madagascar in merc
+    e1 = mapnik2.Box2d(4772116.5490, -2744395.0631, 5765186.4203, -1609458.0673)
+    e2 = mapnik2.Box2d(5124338.3753, -2240522.1727, 5207501.8621, -2130452.8520)
+    e1.clip(e2)
+    eq_(e1,e2)
+    
+    # nz in lon/lat
+    e1 = mapnik2.Box2d(163.8062, -47.1897, 179.3628, -33.9069)
+    e2 = mapnik2.Box2d(173.7378, -39.6395, 174.4849, -38.9252)
+    e1.clip(e2)
+    eq_(e1,e2)
+
+if __name__ == "__main__":
+    setup()
+    [eval(run)() for run in dir() if 'test_' in run]
