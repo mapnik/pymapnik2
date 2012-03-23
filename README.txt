@@ -98,6 +98,15 @@ As an example, to work on this egg in development mode, you can boostrap it by d
     mkdir ~/minitage/others
 
     source ~/minitage/bin/activate
+
+Install minitage, if you haven't yet :
+::
+
+    easy_install -U minitage.core
+
+Initialize it (**mandatory**) :
+::
+
     minimerge -s
 
 To install the minilay for the mapnik2 egg development you can do
