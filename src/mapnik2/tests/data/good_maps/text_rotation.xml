@@ -3,31 +3,31 @@
     <Style name="labels">
         <Rule title="foo">
             <Filter>([name]='CHILE')</Filter>
-            <TextSymbolizer size="15" orientation="45" face-name="DejaVu Sans Book" halo-radius="1">'45˚ angle'</TextSymbolizer>
+            <TextSymbolizer size="15" name="'45&#730; angle'" orientation="45" face-name="DejaVu Sans Book" halo-radius="1"/>
         </Rule>
         <Rule title="foo">
             <Filter>([name]='Australia')</Filter>
-            <TextSymbolizer size="15" orientation="-45" face-name="DejaVu Sans Book" halo-radius="1">'- 45˚ angle'</TextSymbolizer>
+            <TextSymbolizer size="15" name="'- 45&#730; angle'" orientation="-45" face-name="DejaVu Sans Book" halo-radius="1"/>
         </Rule>
         <Rule title="foo1">
             <Filter>([name]='Brazil')</Filter>
-            <TextSymbolizer size="15" orientation="90" face-name="DejaVu Sans Book" halo-radius="1">'90˚ angle'</TextSymbolizer>
+            <TextSymbolizer size="15" name="'90&#730; angle'" orientation="90" face-name="DejaVu Sans Book" halo-radius="1"/>
         </Rule>
         <Rule title="foo">
             <Filter>([name]='Mongolia')</Filter>
-            <TextSymbolizer size="15" orientation="-90" face-name="DejaVu Sans Book" halo-radius="1">'- 90˚ angle'</TextSymbolizer>
+            <TextSymbolizer size="15" name="'- 90&#730; angle'" orientation="-90" face-name="DejaVu Sans Book" halo-radius="1"/>
         </Rule>
         <Rule title="foo">
             <Filter>([name]='South Sudan')</Filter>
-            <TextSymbolizer size="15" orientation="180" face-name="DejaVu Sans Book" halo-radius="1">'180&#730; angle'</TextSymbolizer>
+            <TextSymbolizer size="15" name="'180&#730; angle'" orientation="180" face-name="DejaVu Sans Book" halo-radius="1"/>
         </Rule>
         <Rule title="foo">
             <Filter>([name]='United States')</Filter>
-            <TextSymbolizer size="15" face-name="DejaVu Sans Book" halo-radius="1">'no rotation of text'</TextSymbolizer>
+            <TextSymbolizer size="15" name="'no rotation of text'" face-name="DejaVu Sans Book" halo-radius="1"/>
         </Rule>
         <Rule title="foo">
             <ElseFilter/>
-            <TextSymbolizer size="15" face-name="DejaVu Sans Book" halo-radius="1">[name]</TextSymbolizer>
+            <TextSymbolizer size="15" name="[name]" face-name="DejaVu Sans Book" halo-radius="1"/>
         </Rule>
     </Style>
 
@@ -38,6 +38,7 @@
             <Parameter name="file">../sqlite/qgis_spatiallite.sqlite</Parameter>
             <Parameter name="geometry_field">geometry</Parameter>
             <Parameter name="table">point</Parameter>
+            <Parameter name="wkb_format">spatialite</Parameter>
         </Datasource>
     </Layer>
     

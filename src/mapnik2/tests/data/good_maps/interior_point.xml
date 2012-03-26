@@ -8,13 +8,13 @@
         <Rule>
             <!-- Text using interior point -->
             <!-- Using normal centroid algorithm -->
-            <TextSymbolizer dy="2" placement="interior" face-name="DejaVu Sans Book" halo-radius="2" allow-overlap="true">'interior point'</TextSymbolizer>
+            <TextSymbolizer dy="2" name="'interior point'" placement="interior" face-name="DejaVu Sans Book" halo-radius="2" allow-overlap="true"/>
             <PointSymbolizer placement="interior" allow-overlap="true"/>
         </Rule>
         <Rule>
             <!-- Text using interior point -->
             <!-- Using normal centroid algorithm -->
-            <TextSymbolizer dy="-2" face-name="DejaVu Sans Book" halo-radius="2" allow-overlap="true">'centroid'</TextSymbolizer>
+            <TextSymbolizer dy="-2" name="'centroid'" face-name="DejaVu Sans Book" halo-radius="2" allow-overlap="true"/>
             <PointSymbolizer allow-overlap="true"/>
         </Rule>
     </Style>
@@ -25,6 +25,7 @@
             <Parameter name="type">sqlite</Parameter>
             <Parameter name="file">../sqlite/qgis_spatiallite.sqlite</Parameter>
             <Parameter name="table">multipolygon</Parameter>
+            <Parameter name="wkb_format">spatialite</Parameter>
         </Datasource>
     </Layer>
 </Map>

@@ -1,5 +1,5 @@
 <!DOCTYPE Map>
-<Map background-color="#b5d0d0" srs="+init=epsg:4326" minimum-version="0.7.2">
+<Map background-color="#b5d0d0" srs="+init=epsg:4326" minimum-version="0.8.0">
     <Style name="1">
         <Rule title="foo1">
             <Filter>([name]='Brazil' or [name]='Mongolia' or [name]='Sudan')</Filter>
@@ -9,7 +9,7 @@
             <ElseFilter/>
             <PointSymbolizer file="../svg/point_sm.svg" ignore-placement="true"/>
             <PointSymbolizer/>
-            <TextSymbolizer size="10" dy="10" face-name="DejaVu Sans Book" halo-radius="1" wrap-width="15" allow-overlap="true">'should be a black square on top of this symbol'</TextSymbolizer>
+            <TextSymbolizer size="10" name="'should be a black square on top of this symbol'" dy="10" face-name="DejaVu Sans Book" halo-radius="1" wrap-width="15" allow-overlap="true"/>
 
         </Rule>
     </Style>
@@ -20,6 +20,7 @@
             <Parameter name="type">sqlite</Parameter>
             <Parameter name="file">../sqlite/qgis_spatiallite.sqlite</Parameter>
             <Parameter name="table">point</Parameter>
+            <Parameter name="wkb_format">spatialite</Parameter>
         </Datasource>
     </Layer>
 

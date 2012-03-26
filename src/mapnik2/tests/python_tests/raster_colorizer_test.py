@@ -15,15 +15,10 @@ def test_gen_map():
     outputfile = 'raster_colorizer_test.png'
 
     m = mapnik2.Map(800, 600)
-    try:
-        mapnik2.load_map(m, mapxmlfile)
-        mapnik2.save_map(m, mapxmloutputfile)
-        m.zoom_all()
-        mapnik2.render_to_file(m, outputfile)
-    except RuntimeError,e:
-        # only test datasources that we have installed
-        if not 'Could not create datasource' in str(e):
-            raise RuntimeError(str(e))
+    mapnik2.load_map(m, mapxmlfile)
+    mapnik2.save_map(m, mapxmloutputfile)
+    m.zoom_all()
+    mapnik2.render_to_file(m, outputfile)
 
 #test discrete colorizer mode
 def test_get_color_discrete():

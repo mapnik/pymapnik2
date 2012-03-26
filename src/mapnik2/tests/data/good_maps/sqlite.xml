@@ -37,7 +37,7 @@
     <Style name="point_style">
         <Rule>
             <PointSymbolizer file="../svg/point_sm.svg"/>
-            <TextSymbolizer size="12" dy="-5" face-name="DejaVu Sans Book" halo-fill="rgba(255,255,255,.5)" halo-radius=".5">[name]</TextSymbolizer>
+            <TextSymbolizer size="12" name="[name]" dy="-5" face-name="DejaVu Sans Book" halo-fill="rgba(255,255,255,.5)" halo-radius=".5"/>
         </Rule>
     </Style>
 
@@ -48,6 +48,7 @@
             <Parameter name="type">sqlite</Parameter>
             <Parameter name="file">../sqlite/qgis_spatiallite.sqlite</Parameter>
             <Parameter name="table">point</Parameter>
+            <Parameter name="wkb_format">spatialite</Parameter>
         </Datasource>
     </Layer>
 </Map>

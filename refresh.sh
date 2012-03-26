@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-
-
 # Copyright (C) 2010, Mathieu PASQUET <mpa@makina-corpus.com>
 # All rights reserved.
 #
@@ -25,21 +23,19 @@
 # SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# ARISING INANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-
-
-
-w="${1:-../../Source/mapnik}"
 frsync() {
     echo rsync $@
     rsync $@
-}
-
+} 
+w="${1:-../../Source/mapnik}"
+egg=$(dirname $0) 
+cd $egg
 # refresh code
-frsync -a  $w/bindings/python/*pp cpp/
-frsync -a  ${w}/deps//agg/include/ agg/include/
+rm -rf cpp;mkdir cpp
+cp -vrf $w/bindings/python/*pp cpp/
+frsync -a  ${w}/deps/agg/include/ agg/include/
 # refresh tests
 frsync -a  ${w}/tests/python_tests/ src/mapnik2/tests/python_tests/
 for i in $(find src/mapnik2/tests/ -name '*.py');do
