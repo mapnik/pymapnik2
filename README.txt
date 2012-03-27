@@ -104,11 +104,11 @@ To install the minilay for the mapnik2 egg development you can do
 ::
     
     cd  ~/minitage/others
-    git clone https://github.com/mapnik/pymapnik2.git mapnik-egg
-    ln -fs ~/minitage/others/mapnik-egg/minilays/mapnik-egg/  ~/minitage/minilays/mapnik-egg 
-    #foy python-2.6
+    git clone https://github.com/mapnik/pymapnik2.git mapnik-egg-(py26 or py27)
+    ln -fs ~/minitage/others/mapnik-egg*/minilays/mapnik-egg/  ~/minitage/minilays/mapnik-egg 
+    #for python-2.6
     minimerge -av mapnik-egg-py26
-    #foy python-2.7
+    #for python-2.7
     minimerge -av mapnik-egg-py27
     
 
