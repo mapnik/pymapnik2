@@ -7,3 +7,4 @@ category=others
 license=LGPL
 homepage=http://www.mapnik.org/
 revision=2
+buildout_config=minitage-27.cfg
