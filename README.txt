@@ -106,15 +106,37 @@ To install the minilay for the mapnik2 egg development you can do
     cd  ~/minitage/others
     git clone https://github.com/mapnik/pymapnik2.git mapnik-egg
     ln -fs ~/minitage/others/mapnik-egg/minilays/mapnik-egg/  ~/minitage/minilays/mapnik-egg 
-    minimerge -av mapnik-egg
+    #foy python-2.6
+    minimerge -av mapnik-egg-py26
+    #foy python-2.7
+    minimerge -av mapnik-egg-py27
     
 
 Enjoy your installation
 ::
 
-    cd ~/minitage/others/mapnik-egg
+    cd ~/minitage/others/mapnik-egg-py26
+    or cd ~/minitage/others/mapnik-egg-py27
     ./bin/mypy
     >>> import mapnik2
+
+For using mapnik2 inside your minitagified application:
+
+    - Inside the eggs parts of you buildout add::
+
+        [part]
+        ...
+        eggs += mapnik2
+
+    - In your minibuild, merge the mapnik2 dependencies that you can find here:
+
+        - for python2.6: https://github.com/mapnik/pymapnik2/blob/master/minilays/mapnik-egg/mapnik-egg-py26
+        - for python2.7: https://github.com/mapnik/pymapnik2/blob/master/minilays/mapnik-egg/mapnik-egg-py27
+
+    - Reminimerge your project to build the mapnik2 egg
+    - Then add mapnik2 to your setup.py or buildout for it to be grabbed in your pythonpath.
+    - Rerun buildout, you're done
+    
 
 .. _minitage: http://www.minitage.org
 .. _buildout: http://buildout.org
