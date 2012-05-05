@@ -5,7 +5,7 @@ from setuptools import setup, find_packages, extension
 
 # we do not have the module installed yet.
 mapnik_utils = {}
-exec open('src/mapnik2/utils.py').read() in mapnik_utils
+exec open('src/mapnik/utils.py').read() in mapnik_utils
 read = mapnik_utils['read']
 get_compilation_flags = mapnik_utils['get_compilation_flags']
 
@@ -30,7 +30,7 @@ for lib in compilation_flags['extra_link_args']:
         install_requires.append(dep)
         break
 
-version= '2.0'
+version= '2.0.1'
 setup(
     name='mapnik2',
     version = version,
@@ -52,7 +52,7 @@ setup(
     extras_require={'tests': test_requires},
     ext_modules = [
         extension.Extension(
-            "_mapnik2", files,
+            "_mapnik", files,
             include_dirs=[sources_dir, agg_sources_dir],
             extra_compile_args = compilation_flags.get('includes', []),
             libraries = compilation_flags.get('libraries', []),

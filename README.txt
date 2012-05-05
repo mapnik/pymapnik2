@@ -44,6 +44,19 @@ You will have to have the includes and libraries for
     - mapnik2
     - The current python interpreter
 
+
+BOOST NOTES
+--------------
+
+To specify which boostpython lib to link against, you can use, you can use the following::
+
+    export MAPNIK2_BOOST_PYTHON="libboost_python.so.1"
+
+Where you have on your filesystem::
+
+    /usr/lib/libboost_python.so.1
+
+
 Easy_install with or without virtualenv
 ---------------------------------------------
 * Say where to find mapnik-config by settings correctly your PATH environment variable

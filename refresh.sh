@@ -37,12 +37,21 @@ rm -rf cpp;mkdir cpp
 cp -vrf $w/bindings/python/*pp cpp/
 frsync -a  ${w}/deps/agg/include/ agg/include/
 # refresh tests
-frsync -a  ${w}/tests/python_tests/ src/mapnik2/tests/python_tests/
-for i in $(find src/mapnik2/tests/ -name '*.py');do
+frsync -av  ${w}/tests/python_tests/ src/mapnik/tests/python_tests/
+for i in $(find src/mapnik/tests/ -name '*.py');do
     #sed -re "s/\.\.\/data/\.\/data/g" -i $i
-    sed -re "s/from utilities/from mapnik2.tests.python_tests.utilities/g" -i $i
+    echo $i
+    sed -re "s/from utilities/from mapnik.tests.python_tests.utilities/g" -i $i
 done
 # refresh test resources
-frsync -a --delete  ${w}/tests/data/ src/mapnik2/tests/data/
-
+frsync -a --delete  ${w}/tests/data/ src/mapnik/tests/data/
+frsync -a --delete  ${w}/demo/  src/mapnik/demo/
+for i in  $w/bindings/python/mapnik/*py;do
+    if [[ ! "$(echo $i|sed -re 's/.*(__init__).*/match/g')" == "match" ]];then
+        cp -v $i src/mapnik/
+    fi
+done
+echo "You Need to manually migrate: $w/bindings/python/mapnik/__init__.py"
+#echo "With  src/mapnik/__init__.py"
+ 
 # vim:set et sts=4 ts=4 tw=0:

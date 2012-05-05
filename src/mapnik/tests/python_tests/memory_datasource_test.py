@@ -1,0 +1,42 @@
+#encoding: utf8
+import itertools
+import unittest
+
+from mapnik.tests.python_tests.utilities import Todo
+
+class MemoryDatasource(unittest.TestCase):
+    ids = itertools.count(0)
+
+    def makeOne(self, *args, **kw):
+        from mapnik import MemoryDatasource
+        return MemoryDatasource(*args, **kw)
+
+    def makeFeature(self, wkt, **properties):
+        from mapnik import Feature
+        f = Feature(self.ids.next())
+        f.add_geometries_from_wkt(wkt)
+        for k,v in properties.iteritems():
+            f[k] = v
+        return f
+
+    def test_default_constructor(self):
+        f = self.makeOne()
+        self.failUnless(f is not None)
+
+    def test_add_feature(self):
+        md = self.makeOne()
+        self.failUnlessEqual(md.num_features(), 0)
+        md.add_feature(self.makeFeature('Point(2 3)', foo='bar'))
+        self.failUnlessEqual(md.num_features(), 1)
+
+        from mapnik import Coord
+        retrieved = md.features_at_point(Coord(2,3)).features
+        self.failUnlessEqual(len(retrieved), 1)
+        f = retrieved[0]
+        self.failUnlessEqual(f['foo'], 'bar')
+
+        retrieved = md.features_at_point(Coord(20,30)).features
+        self.failUnlessEqual(len(retrieved), 0)
+
+if __name__ == "__main__":
+    [eval(run)() for run in dir() if 'test_' in run]
