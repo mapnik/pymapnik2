@@ -1,6 +1,12 @@
 Changelog for mapnik2
 ========================
 
+2.0.2 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
 2.0.1 (2012-05-06)
 ------------------
 First public release of mapnik2 eggified python bindings
