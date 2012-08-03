@@ -2,7 +2,7 @@ import sys
 
 import re
 import os
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, check_output
 from ctypes import CDLL
 
 def read(rnames):
@@ -37,7 +37,7 @@ def get_config_output(exe, args):
     if ret.wait() != 0:
         raise Exception(
             '%s error: %s\n%s' % (
-                cmd, 
+                cmd,
                 ret.stdout.read(),
                 ret.stderr.read(),
             )
@@ -91,6 +91,21 @@ def get_boost_flags():
                   raise Exception('Cant find boost_python lib!')
     return {'includes': includes, 'libraries': libraries}
 
+
+def add_multiarch_paths(flags):
+    '''
+    Find multiarchs specifics paths for Debian/Ubuntu.
+    See https://wiki.ubuntu.com/MultiarchSpec
+    Could be fixed in Scons and/or mapnik-utils
+    '''
+    try:
+        arch = check_output(['dpkg-architecture', '-qDEB_HOST_MULTIARCH'])
+        arch = arch[:-1] if arch.endswith('\n') else arch
+        flags['includes'].append('-I/usr/lib/%s/sigc++-2.0/include' % arch)
+    except:
+        pass
+
+
 def get_compilation_flags():
     compilation_flags = {
         'includes': [],
@@ -104,6 +119,8 @@ def get_compilation_flags():
     compilation_flags['libraries'].extend(bf['libraries'])
     compilation_flags['includes'].extend(mapnik_config(["--cflags"]).split())
     compilation_flags['extra_link_args'].extend(mapnik_config(["--libs"]).split())
+    if sys.platform.startswith("linux"):
+        add_multiarch_paths(compilation_flags)
     return compilation_flags
 
 
