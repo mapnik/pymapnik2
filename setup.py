@@ -9,8 +9,8 @@ exec open('src/mapnik/utils.py').read() in mapnik_utils
 read = mapnik_utils['read']
 get_compilation_flags = mapnik_utils['get_compilation_flags']
 
-README = read(('README.txt',))
-CHANGELOG = read(('CHANGES.txt',))
+README = read(('README.rst',))
+CHANGELOG = read(('CHANGES.rst',))
 long_description = '\n'.join([README, CHANGELOG])+'\n'
 
 compilation_flags = get_compilation_flags()
