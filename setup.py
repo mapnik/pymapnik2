@@ -30,7 +30,7 @@ for lib in compilation_flags['extra_link_args']:
         install_requires.append(dep)
         break
 
-version = '2.0.2'
+version = '2.0.3.dev0'
 setup(
     name='mapnik2',
     version = version,
