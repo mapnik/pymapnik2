@@ -110,20 +110,30 @@ As an example, to work on this egg in development mode, you can boostrap it by d
     virtualenv --no-site-packages --distribute ~/minitage
     mkdir ~/minitage/others
 
+
+
+
+Install minitage, if you haven't yet ::
+
+    source ~/minitage/bin/activate
+    easy_install -U minitage.core
+
+Initialize it (**mandatory**) ::
+
     source ~/minitage/bin/activate
     minimerge -s
 
 To install the minilay for the mapnik2 egg development you can do
 ::
-    
+
     cd  ~/minitage/others
     git clone https://github.com/mapnik/pymapnik2.git mapnik-egg-(py26 or py27)
-    ln -fs ~/minitage/others/mapnik-egg*/minilays/mapnik-egg/  ~/minitage/minilays/mapnik-egg 
+    ln -fs ~/minitage/others/mapnik-egg*/minilays/mapnik-egg/  ~/minitage/minilays/mapnik-egg
     #for python-2.6
     minimerge -av mapnik-egg-py26
     #for python-2.7
     minimerge -av mapnik-egg-py27
-    
+
 
 Enjoy your installation
 ::
@@ -149,7 +159,7 @@ For using mapnik2 inside your minitagified application:
     - Reminimerge your project to build the mapnik2 egg
     - Then add mapnik2 to your setup.py or buildout for it to be grabbed in your pythonpath.
     - Rerun buildout, you're done
-    
+
 
 .. _minitage: http://www.minitage.org
 .. _buildout: http://buildout.org
