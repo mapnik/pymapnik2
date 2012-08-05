@@ -8,7 +8,7 @@ Introduction
 Official mapnik bindings repackaged in the distutils way to facilitate deployments.
 
 The python bindings are tied to the mapnik2 library version.
-This bindings are for mapnik2 - 2.0.1
+This bindings are for ** mapnik2 - 2.0.1 **
 
 Credits
 =========
