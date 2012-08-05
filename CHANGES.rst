@@ -1,7 +1,7 @@
 Changelog for mapnik2
 ========================
 
-2.0.1.2 (unreleased)
+2.0.1.2 (2012-08-05)
 --------------------
 
 - Nothing changed yet.
