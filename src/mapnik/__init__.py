@@ -271,6 +271,7 @@ class _Feature(Feature, _injector):
 
     TODO: docs
     """
+    _done = False
     @property
     def properties(self):
         return _DeprecatedFeatureProperties(self)
@@ -282,7 +283,17 @@ class _Feature(Feature, _injector):
         return dict(self)
     
     def __init__(self, id, wkt=None, **properties):
-        Feature._c___init__(self, id)
+        try:
+            Feature._c___init__(self, id)
+        except RuntimeError, e:
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # keep on bindings upgrade
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if 'recursion' in e.message:
+                pass
+            else:
+                raise
+
         if wkt is not None:
             self.add_geometries_from_wkt(wkt)
         for k, v in properties.iteritems():
@@ -295,8 +306,17 @@ class _Color(Color,_injector):
 class _Symbolizers(Symbolizers,_injector):
 
     def __getitem__(self, idx):
-        sym = Symbolizers._c___getitem__(self, idx)
-        return sym.symbol()
+        try:
+            sym = Symbolizers._c___getitem__(self, idx)
+            return sym.symbol()
+        except RuntimeError, e:
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # keep on bindings upgrade
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if 'recursion' in e.message:
+                pass
+            else:
+                raise 
 
 def _add_symbol_method_to_symbolizers(vars=globals()):
 
