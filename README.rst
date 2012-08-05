@@ -15,12 +15,14 @@ The python bindings are tied to the mapnik2 library version.
 
 To use with:
 
-    - :mapnik2 library - 2.0.1: -> mapnik2 2.0.1.2 ::
+    - :mapnik2 library - 2.0.1: == mapnik2 2.0.1.3
+       ::
 
-        easy_install -U mapnik2==2.0.1.2
+        easy_install -U mapnik2==2.0.1.3
 
 
-    - :mapnik2 library - 2.0.2: -> mapnik2 2.0.2.1 ::
+    - :mapnik2 library - 2.0.2: == mapnik2 2.0.2.1
+       ::
 
         easy_install -U mapnik2==2.0.2.1
 
