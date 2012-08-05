@@ -4,7 +4,7 @@ Changelog for mapnik2
 2.0.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- renaming release
 
 
 2.0.2 (2012-08-04)
