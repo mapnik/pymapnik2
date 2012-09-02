@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2006 Artem Pavlenko, Jean-Francois Doyon
@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id: mapnik_envelope.cc 27 2005-03-30 21:45:40Z pavlenko $
 
 // boost
 #include <boost/python.hpp>
@@ -87,6 +86,14 @@ void (box2d<double>::*re_center_p2)(coord<double,2> const& ) = &box2d<double>::r
 // clip
 void (box2d<double>::*clip)(box2d<double> const&) = &box2d<double>::clip;
 
+// deepcopy
+box2d<double> box2d_deepcopy(box2d<double> & obj, boost::python::dict memo)
+{
+    // FIXME::ignore memo for now
+    box2d<double> result(obj);
+    return result;
+}
+
 void export_envelope()
 {
     using namespace boost::python;
@@ -102,13 +109,13 @@ void export_envelope()
                  "Equivalent to Box2d(ll.x, ll.y, ur.x, ur.y).\n"))
         .def("from_string",from_string)
         .staticmethod("from_string")
-        .add_property("minx", &box2d<double>::minx, 
+        .add_property("minx", &box2d<double>::minx,
                       "X coordinate for the lower left corner")
-        .add_property("miny", &box2d<double>::miny, 
+        .add_property("miny", &box2d<double>::miny,
                       "Y coordinate for the lower left corner")
         .add_property("maxx", &box2d<double>::maxx,
                       "X coordinate for the upper right corner")
-        .add_property("maxy", &box2d<double>::maxy, 
+        .add_property("maxy", &box2d<double>::maxy,
                       "Y coordinate for the upper right corner")
         .def("center", &box2d<double>::center,
              "Returns the coordinates of the center of the bounding box.\n"
@@ -259,17 +266,18 @@ void export_envelope()
              ">>> e1 = Box2d(0, 0, 100, 100)\n"
              ">>> e2 = Box2d(50, 50, 150, 150)\n"
              ">>> e1.intersect(e2)\n"
-             "Box2d(50.0, 50.0, 100.0, 100.0)\n"     
+             "Box2d(50.0, 50.0, 100.0, 100.0)\n"
             )
         .def(self == self) // __eq__
         .def(self != self) // __neq__
         .def(self + self)  // __add__
-        //.def(self - self)  // __sub__
         .def(self * float()) // __mult__
-        .def(float() * self) 
+        .def(float() * self)
         .def(self / float()) // __div__
         .def("__getitem__",&box2d<double>::operator[])
         .def("valid",&box2d<double>::valid)
         .def_pickle(envelope_pickle_suite())
+        .def("__deepcopy__", &box2d_deepcopy)
         ;
+
 }

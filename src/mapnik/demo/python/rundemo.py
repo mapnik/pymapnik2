@@ -138,7 +138,9 @@ qcdrain_lyr.datasource = mapnik.Shapefile(file='../data/qcdrainage')
 qcdrain_style = mapnik.Style()
 qcdrain_rule = mapnik.Rule()
 qcdrain_rule.filter = mapnik.Expression('[HYC] = 8')
-qcdrain_rule.symbols.append(mapnik.PolygonSymbolizer(mapnik.Color(153, 204, 255)))
+sym = mapnik.PolygonSymbolizer(mapnik.Color(153, 204, 255))
+sym.smooth = 1.0 # very smooth
+qcdrain_rule.symbols.append(sym)
 qcdrain_style.rules.append(qcdrain_rule)
 
 m.append_style('drainage', qcdrain_style)
@@ -322,7 +324,7 @@ m.layers.append(popplaces_lyr)
 # Set the initial extent of the map in 'master' spherical Mercator projection
 m.zoom_to_box(mapnik.Box2d(-8024477.28459,5445190.38849,-7381388.20071,5662941.44855)) 
 
-# Render two maps, two PNGs, one JPEG.
+# Render map
 im = mapnik.Image(m.width,m.height)
 mapnik.render(m, im)
 
@@ -347,6 +349,9 @@ images_.append('demo_high.jpg')
 im.save('demo_low.jpg', 'jpeg50')
 images_.append('demo_low.jpg')
 
+im.save('demo.tif', 'tiff')
+images_.append('demo.tif')
+
 # Render cairo examples
 if HAS_PYCAIRO_MODULE and mapnik.has_pycairo():
     
@@ -365,6 +370,18 @@ if HAS_PYCAIRO_MODULE and mapnik.has_pycairo():
     images_.append('demo.ps')
     postscript_surface.finish()    
 
+    image_surface = cairo.ImageSurface(cairo.FORMAT_RGB24, m.width, m.height)
+    mapnik.render(m, image_surface)
+    image_surface.write_to_png('demo_cairo_rgb24.png')
+    images_.append('demo_cairo_argb24.png')
+    image_surface.finish()
+
+    image_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, m.width, m.height)
+    mapnik.render(m, image_surface)
+    image_surface.write_to_png('demo_cairo_argb32.png')
+    images_.append('demo_cairo_argb32.png')
+    image_surface.finish()
+    
 else:
     print '\n\nPycairo not available...',
     if  mapnik.has_cairo():
@@ -376,9 +393,9 @@ else:
         images_.append('demo.ps')
         mapnik.render_to_file(m,'demo.svg')
         images_.append('demo.svg')
-        mapnik.render_to_file(m,'demo_cairo_rgb.png','RGB24')
+        mapnik.render_to_file(m,'demo_cairo_rgb24.png','RGB24')
         images_.append('demo_cairo_rgb.png')
-        mapnik.render_to_file(m,'demo_cairo_argb.png','ARGB32')
+        mapnik.render_to_file(m,'demo_cairo_argb32.png','ARGB32')
         images_.append('demo_cairo_argb.png')
 
 print "\n\n", len(images_), "maps have been rendered in the current directory:"

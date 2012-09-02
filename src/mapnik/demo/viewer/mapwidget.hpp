@@ -1,5 +1,6 @@
 /* This file is part of Mapnik (c++ mapping toolkit)
- * Copyright (C) 2007 Artem Pavlenko
+ *
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * Mapnik is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,21 +31,31 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <mapnik/map.hpp>
 
-class MapWidget : public QWidget 
+#ifndef Q_MOC_RUN
+#include <mapnik/map.hpp>
+#endif
+
+class MapWidget : public QWidget
 {
     Q_OBJECT
-      
-    public:   
-    enum eTool 
+
+public:
+    enum eTool
     {
         ZoomToBox = 1,
         Pan,
         Info,
     };
-      
-private: 
+
+    enum eRenderer
+    {
+        AGG,
+        Cairo,
+        Grid
+    };
+
+private:
     boost::shared_ptr<mapnik::Map> map_;
     int selected_;
     QPixmap pix_;
@@ -59,12 +70,13 @@ private:
     QPen pen_;
     int selectedLayer_;
     double scaling_factor_;
+    eRenderer cur_renderer_;
 public:
     MapWidget(QWidget *parent=0);
     void setTool(eTool tool);
     boost::shared_ptr<mapnik::Map> getMap();
     inline QPixmap const& pixmap() const { return pix_;}
-    void setMap(boost::shared_ptr<mapnik::Map> map);    
+    void setMap(boost::shared_ptr<mapnik::Map> map);
     void defaultView();
     void zoomToBox(mapnik::box2d<double> const& box);
     void zoomIn();
@@ -78,19 +90,22 @@ public slots:
     void zoomToLevel(int level);
     void updateMap();
     void layerSelected(int);
+    void updateRenderer(QString const& txt);
+    void updateScaleFactor(double scale_factor);
 signals:
     void mapViewChanged();
-protected:    
+protected:
     void paintEvent(QPaintEvent* ev);
     void resizeEvent(QResizeEvent* ev);
     void mousePressEvent(QMouseEvent* e);
     void mouseMoveEvent(QMouseEvent* e);
     void mouseReleaseEvent(QMouseEvent* e);
+    void wheelEvent(QWheelEvent* e);
     void keyPressEvent(QKeyEvent *e);
     void export_to_file(unsigned width,
                         unsigned height,
-                        std::string const& filename, 
-                        std::string const& type);    
+                        std::string const& filename,
+                        std::string const& type);
 };
 
 #endif // MAP_WIDGET_HPP

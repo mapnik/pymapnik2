@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2006 Artem Pavlenko, Jean-Francois Doyon
@@ -20,8 +20,6 @@
  *
  *****************************************************************************/
 
-//$Id$
-
 #include <boost/python.hpp>
 #include <mapnik/datasource_cache.hpp>
 
@@ -36,7 +34,7 @@ void export_datasource_cache()
              return_value_policy<reference_existing_object>())
         .staticmethod("instance")
         ;
-    
+
     class_<datasource_cache,bases<singleton<datasource_cache,CreateStatic> >,
         boost::noncopyable>("DatasourceCache",no_init)
         .def("create",&datasource_cache::create)
@@ -44,6 +42,6 @@ void export_datasource_cache()
         .def("register_datasources",&datasource_cache::register_datasources)
         .staticmethod("register_datasources")
         .def("plugin_names",&datasource_cache::plugin_names)
-        .staticmethod("plugin_names")        
+        .staticmethod("plugin_names")
         ;
 }

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2011 Artem Pavlenko
@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
 // boost
 #include <boost/python.hpp>
@@ -40,14 +39,17 @@ static boost::shared_ptr<mapnik::rgba_palette> make_palette( const std::string& 
     return boost::make_shared<mapnik::rgba_palette>(palette, type);
 }
 
-void export_palette () 
+void export_palette ()
 {
     using namespace boost::python;
-    class_<boost::shared_ptr<mapnik::rgba_palette> >("Palette",no_init)
-                     /*, init<std::string,std::string>(
-                      ( arg("palette"), arg("type")),
-                      "Creates a new color palette from a file\n"
-                      )*/
-                     .def( "__init__", boost::python::make_constructor( &make_palette)) 
-    ;
+
+    class_<mapnik::rgba_palette,
+        boost::shared_ptr<mapnik::rgba_palette>,
+        boost::noncopyable >("Palette",no_init)
+        //, init<std::string,std::string>(
+        // ( arg("palette"), arg("type")),
+        // "Creates a new color palette from a file\n"
+        // )
+        .def( "__init__", boost::python::make_constructor(make_palette))
+        ;
 }

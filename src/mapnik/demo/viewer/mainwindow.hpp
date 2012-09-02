@@ -1,5 +1,6 @@
 /* This file is part of Mapnik (c++ mapping toolkit)
- * Copyright (C) 2006 Artem Pavlenko
+ *
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * Mapnik is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,6 +28,7 @@
 #include <QActionGroup>
 #include <QStatusBar>
 #include <QAbstractItemModel>
+#include <QDoubleSpinBox>
 
 #include "mapwidget.hpp"
 
@@ -35,6 +37,8 @@
 class LayerTab;
 class StyleTab;
 class QSlider;
+class QComboBox;
+class QDoubleSpinBox;
 
 class MainWindow : public QMainWindow
 {
@@ -67,7 +71,7 @@ private:
     void createToolBars();
     void createContextMenu();
     void load_map_file(QString const& filename);
-     
+
 
     QString currentPath;
     QString filename_;
@@ -105,6 +109,8 @@ private:
     //status bar
     QStatusBar *status;
     QSlider * slider_;
+    QComboBox * renderer_selector_;
+    QDoubleSpinBox * scale_factor_;
     mapnik::box2d<double> default_extent_;
 };
 

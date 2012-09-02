@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2006 Artem Pavlenko, Jean-Francois Doyon
@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id: mapnik_map.cc 17 2005-03-08 23:58:43Z pavlenko $
 
 // boost
 #include <boost/python.hpp>
@@ -29,11 +28,11 @@
 // mapnik
 #include <mapnik/layer.hpp>
 #include <mapnik/map.hpp>
+#include <mapnik/projection.hpp>
+#include <mapnik/ctrans.hpp>
 #include <mapnik/feature_type_style.hpp>
-#include <mapnik/metawriter_inmem.hpp>
-
+//#include <mapnik/util/deepcopy.hpp>
 #include "mapnik_enumeration.hpp"
-#include "python_optional.hpp"
 
 using mapnik::color;
 using mapnik::coord;
@@ -41,86 +40,11 @@ using mapnik::box2d;
 using mapnik::layer;
 using mapnik::Map;
 
-struct map_pickle_suite : boost::python::pickle_suite
-{
-    static boost::python::tuple
-    getinitargs(const Map& m)
-    {
-        return boost::python::make_tuple(m.width(),m.height(),m.srs());
-    }
-
-    static  boost::python::tuple
-    getstate(const Map& m)
-    {
-        boost::python::list l;
-        for (unsigned i=0;i<m.layer_count();++i)
-        {
-            l.append(m.getLayer(i));
-        }
-                            
-        boost::python::list s;
-        Map::const_style_iterator it = m.styles().begin();
-        Map::const_style_iterator end = m.styles().end();
-        for (; it != end; ++it)
-        {
-            const std::string & name = it->first;
-            const mapnik::feature_type_style & style = it->second;
-            boost::python::tuple style_pair = boost::python::make_tuple(name,style);
-            s.append(style_pair);
-        }
-
-        return boost::python::make_tuple(m.get_current_extent(),m.background(),l,s,m.base_path());
-    }
-
-    static void
-    setstate (Map& m, boost::python::tuple state)
-    {
-        using namespace boost::python;
-        if (len(state) != 5)
-        {
-            PyErr_SetObject(PyExc_ValueError,
-                            ("expected 5-item tuple in call to __setstate__; got %s"
-                             % state).ptr()
-                );
-            throw_error_already_set();
-        }
-
-        box2d<double> ext = extract<box2d<double> >(state[0]);
-        m.zoom_to_box(ext);
-        if (state[1])
-        {
-            color bg = extract<color>(state[1]);
-            m.set_background(bg);
-        }    
-        
-        boost::python::list l=extract<boost::python::list>(state[2]);
-        for (int i=0;i<len(l);++i)
-        {
-            m.addLayer(extract<layer>(l[i]));
-        }
-        
-        boost::python::list s=extract<boost::python::list>(state[3]);
-        for (int i=0;i<len(s);++i)
-        {
-            boost::python::tuple style_pair=extract<boost::python::tuple>(s[i]);
-            std::string name = extract<std::string>(style_pair[0]);
-            mapnik::feature_type_style style = extract<mapnik::feature_type_style>(style_pair[1]);
-            m.insert_style(name, style);
-        }
-
-        if (state[4])
-        {
-            std::string base_path = extract<std::string>(state[4]);
-            m.set_base_path(base_path);
-        }    
-    }
-};
-
 std::vector<layer>& (Map::*layers_nonconst)() =  &Map::layers;
 std::vector<layer> const& (Map::*layers_const)() const =  &Map::layers;
+mapnik::parameters& (Map::*params_nonconst)() =  &Map::get_extra_parameters;
 
-
-mapnik::feature_type_style find_style (mapnik::Map const& m, std::string const& name)
+mapnik::feature_type_style find_style(mapnik::Map const& m, std::string const& name)
 {
     boost::optional<mapnik::feature_type_style const&> style = m.find_style(name);
     if (!style)
@@ -131,24 +55,15 @@ mapnik::feature_type_style find_style (mapnik::Map const& m, std::string const& 
     return *style;
 }
 
-bool has_metawriter(mapnik::Map const& m)
+mapnik::font_set find_fontset(mapnik::Map const& m, std::string const& name)
 {
-    if (m.metawriters().size() >=1)
-        return true;
-    return false;
-}
-
-// returns empty shared_ptr when the metawriter isn't found, or is 
-// of the wrong type. empty pointers make it back to Python as a None.
-mapnik::metawriter_inmem_ptr find_inmem_metawriter(const mapnik::Map &m, const std::string &name) {
-  mapnik::metawriter_ptr metawriter = m.find_metawriter(name);
-  mapnik::metawriter_inmem_ptr inmem;
-
-  if (metawriter) {
-    inmem = boost::dynamic_pointer_cast<mapnik::metawriter_inmem>(metawriter);
-  }
- 
-  return inmem;
+    boost::optional<mapnik::font_set const&> fontset = m.find_fontset(name);
+    if (!fontset)
+    {
+        PyErr_SetString(PyExc_KeyError, "Invalid font_set name");
+        boost::python::throw_error_already_set();
+    }
+    return *fontset;
 }
 
 // TODO - we likely should allow indexing by negative number from python
@@ -157,7 +72,7 @@ mapnik::featureset_ptr query_point(mapnik::Map const& m, int index, double x, do
 {
     if (index < 0){
         PyErr_SetString(PyExc_IndexError, "Please provide a layer index >= 0");
-        boost::python::throw_error_already_set();    
+        boost::python::throw_error_already_set();
     }
     unsigned idx = index;
     return m.query_point(idx, x, y);
@@ -167,16 +82,39 @@ mapnik::featureset_ptr query_map_point(mapnik::Map const& m, int index, double x
 {
     if (index < 0){
         PyErr_SetString(PyExc_IndexError, "Please provide a layer index >= 0");
-        boost::python::throw_error_already_set();    
+        boost::python::throw_error_already_set();
     }
     unsigned idx = index;
     return m.query_map_point(idx, x, y);
 }
 
-void export_map() 
+// deepcopy
+/*
+mapnik::Map map_deepcopy(mapnik::Map & m, boost::python::dict memo)
+{
+    // FIXME: ignore memo for now
+    mapnik::Map result;
+    mapnik::util::deepcopy(m, result);
+    return result;
+}
+*/
+
+void set_maximum_extent(mapnik::Map & m, boost::optional<mapnik::box2d<double> > const& box)
+{
+    if (box)
+    {
+        m.set_maximum_extent(*box);
+    }
+    else
+    {
+        m.reset_maximum_extent();
+    }
+}
+
+void export_map()
 {
     using namespace boost::python;
-   
+
     // aspect ratio fix modes
     mapnik::enumeration_<mapnik::aspect_fix_mode_e>("aspect_fix_mode")
         .value("GROW_BBOX", mapnik::Map::GROW_BBOX)
@@ -188,12 +126,11 @@ void export_map()
         .value("ADJUST_CANVAS_WIDTH",mapnik::Map::ADJUST_CANVAS_WIDTH)
         .value("ADJUST_CANVAS_HEIGHT", mapnik::Map::ADJUST_CANVAS_HEIGHT)
         ;
-   
-    python_optional<mapnik::color> ();
+
     class_<std::vector<layer> >("Layers")
         .def(vector_indexing_suite<std::vector<layer> >())
         ;
-    
+
     class_<Map>("Map","The map object.",init<int,int,optional<std::string const&> >(
                     ( arg("width"),arg("height"),arg("srs") ),
                     "Create a Map with a width and height as integers and, optionally,\n"
@@ -209,10 +146,7 @@ void export_map()
                     ">>> m.srs\n"
                     "'+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'\n"
                     ))
-        
-        .def_pickle(map_pickle_suite()
-            )
-        
+
         .def("append_style",&Map::insert_style,
              (arg("style_name"),arg("style_object")),
              "Insert a Mapnik Style onto the map by appending it.\n"
@@ -224,6 +158,11 @@ void export_map()
              "True # style object added to map by name\n"
              ">>> m.append_style('Style Name', sty)\n"
              "False # you can only append styles with unique names\n"
+            )
+
+        .def("append_fontset",&Map::insert_fontset,
+             (arg("fontset")),
+             "Add a FontSet to the map."
             )
 
         .def("buffered_envelope",
@@ -258,9 +197,14 @@ void export_map()
              "...'maxy', 'minx', 'miny', 'width'\n"
             )
 
+        .def("find_fontset",find_fontset,
+             (arg("name")),
+             "Find a fontset by name."
+            )
+
         .def("find_style",
              find_style,
-             (arg("style_name")),
+             (arg("name")),
              "Query the Map for a style by name and return\n"
              "a style object if found or raise KeyError\n"
              "style if not found.\n"
@@ -270,15 +214,6 @@ void export_map()
              "<mapnik._mapnik.Style object at 0x654f0>\n"
             )
 
-        .def("has_metawriter",
-             has_metawriter,
-             "Check if the Map has any active metawriters\n"
-             "\n"
-             "Usage:\n"
-             ">>> m.has_metawriter()\n"
-             "False\n"
-            )
-        
         .def("pan",&Map::pan,
              (arg("x"),arg("y")),
              "Set the Map center at a given x,y location\n"
@@ -292,7 +227,7 @@ void export_map()
              ">>> m.envelope().center()\n"
              "Coord(0.00166666666667,-0.835)\n"
             )
-        
+
         .def("pan_and_zoom",&Map::pan_and_zoom,
              (arg("x"),arg("y"),arg("factor")),
              "Set the Map center at a given x,y location\n"
@@ -308,7 +243,7 @@ void export_map()
              ">>> m.scale()\n"
              "0.00062500000000000001\n"
             )
-        
+
         .def("query_map_point",query_map_point,
              (arg("layer_idx"),arg("pixel_x"),arg("pixel_y")),
              "Query a Map Layer (by layer index) for features \n"
@@ -325,7 +260,7 @@ void export_map()
              ">>> featureset.features\n"
              ">>> [<mapnik.Feature object at 0x3995630>]\n"
             )
-        
+
         .def("query_point",query_point,
              (arg("layer idx"),arg("x"),arg("y")),
              "Query a Map Layer (by layer index) for features \n"
@@ -349,7 +284,7 @@ void export_map()
              "Usage:\n"
              ">>> m.remove_all()\n"
             )
-        
+
         .def("remove_style",&Map::remove_style,
              (arg("style_name")),
              "Remove a Mapnik Style from the map.\n"
@@ -365,7 +300,7 @@ void export_map()
              "Usage:\n"
              ">>> m.resize(64,64)\n"
             )
-        
+
         .def("scale", &Map::scale,
              "Return the Map Scale.\n"
              "Usage:\n"
@@ -379,16 +314,16 @@ void export_map()
              "\n"
              ">>> m.scale_denominator()\n"
             )
-      
+
         .def("view_transform",&Map::view_transform,
              "Return the map ViewTransform object\n"
              "which is used internally to convert between\n"
              "geographic coordinates and screen coordinates.\n"
              "\n"
              "Usage:\n"
-             ">>> m.view_transform()\n"         
+             ">>> m.view_transform()\n"
             )
-      
+
         .def("zoom",&Map::zoom,
              (arg("factor")),
              "Zoom in or out by a given factor.\n"
@@ -399,7 +334,7 @@ void export_map()
              "\n"
              ">>> m.zoom(0.25)\n"
             )
-        
+
         .def("zoom_all",&Map::zoom_all,
              "Set the geographical extent of the map\n"
              "to the combined extents of all active layers.\n"
@@ -407,7 +342,7 @@ void export_map()
              "Usage:\n"
              ">>> m.zoom_all()\n"
             )
-        
+
         .def("zoom_to_box",&Map::zoom_to_box,
              (arg("Boxd2")),
              "Set the geographical extent of the map\n"
@@ -417,39 +352,9 @@ void export_map()
              ">>> extext = Box2d(-180.0, -90.0, 180.0, 90.0)\n"
              ">>> m.zoom_to_box(extent)\n"
             )
-        .def("get_metawriter_property", &Map::get_metawriter_property,
-            (arg("name")),
-            "Reads a metawriter property.\n"
-            "These properties are completely user-defined and can be used to"
-            "create filenames, etc.\n"
-            "\n"
-            "Usage:\n"
-            ">>> map.set_metawriter_property(\"x\", \"10\")\n"
-            ">>> map.get_metawriter_property(\"x\")\n"
-            "10\n"
-        )
-        .def("set_metawriter_property", &Map::set_metawriter_property,
-            (arg("name"),arg("value")),
-            "Sets a metawriter property.\n"
-            "These properties are completely user-defined and can be used to"
-            "create filenames, etc.\n"
-            "\n"
-            "Usage:\n"
-            ">>> map.set_metawriter_property(\"x\", str(x))\n"
-            ">>> map.set_metawriter_property(\"y\", str(y))\n"
-            ">>> map.set_metawriter_property(\"z\", str(z))\n"
-            "\n"
-            "Use a path like \"[z]/[x]/[y].json\" to create filenames.\n"
-        )
-        .def("find_inmem_metawriter", find_inmem_metawriter,
-            (arg("name")),
-            "Gets an inmem metawriter, or None if no such metawriter "
-            "exists.\n"
-            "Use this after the map has been rendered to retrieve information "
-            "about the hit areas rendered on the map.\n"
-          )
-        
-        .def("extra_attributes",&Map::get_extra_attributes,return_value_policy<copy_const_reference>(),"TODO")
+
+        //.def("__deepcopy__",&map_deepcopy)
+        .add_property("parameters",make_function(params_nonconst,return_value_policy<reference_existing_object>()),"TODO")
 
         .add_property("aspect_fix_mode",
                       &Map::get_aspect_fix_mode,
@@ -460,15 +365,33 @@ void export_map()
                       "Usage:\n"
                       "\n"
                       ">>> m.aspect_fix_mode = aspect_fix_mode.GROW_BBOX\n"
-            )      
-        
+            )
+
         .add_property("background",make_function
+                      (&Map::background,return_value_policy<copy_const_reference>()),
+                      &Map::set_background,
+                      "The background color of the map (same as background_color property).\n"
+                      "\n"
+                      "Usage:\n"
+                      ">>> m.background = Color('steelblue')\n"
+            )
+
+        .add_property("background_color",make_function
                       (&Map::background,return_value_policy<copy_const_reference>()),
                       &Map::set_background,
                       "The background color of the map.\n"
                       "\n"
                       "Usage:\n"
-                      ">>> m.background = Color('steelblue')\n"
+                      ">>> m.background_color = Color('steelblue')\n"
+            )
+
+        .add_property("background_image",make_function
+                      (&Map::background_image,return_value_policy<copy_const_reference>()),
+                      &Map::set_background_image,
+                      "The optional background image of the map.\n"
+                      "\n"
+                      "Usage:\n"
+                      ">>> m.background_image = '/path/to/image.png'\n"
             )
 
         .add_property("base",
@@ -480,7 +403,7 @@ void export_map()
                       "Usage:\n"
                       ">>> m.base_path = '.'\n"
             )
-        
+
         .add_property("buffer_size",
                       &Map::buffer_size,
                       &Map::set_buffer_size,
@@ -493,7 +416,7 @@ void export_map()
                       ">>> m.buffer_size\n"
                       "2\n"
             )
-         
+
         .add_property("height",
                       &Map::height,
                       &Map::set_height,
@@ -507,9 +430,9 @@ void export_map()
                       ">>> m.height\n"
                       "600\n"
             )
-        
+
         .add_property("layers",make_function
-                      (layers_nonconst,return_value_policy<reference_existing_object>()), 
+                      (layers_nonconst,return_value_policy<reference_existing_object>()),
                       "The list of map layers.\n"
                       "\n"
                       "Usage:\n"
@@ -521,7 +444,7 @@ void export_map()
 
         .add_property("maximum_extent",make_function
                       (&Map::maximum_extent,return_value_policy<copy_const_reference>()),
-                      &Map::set_maximum_extent,
+                      &set_maximum_extent,
                       "The maximum extent of the map.\n"
                       "\n"
                       "Usage:\n"
@@ -548,7 +471,7 @@ void export_map()
                       "... \n"
                       ">>> m.srs = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over'\n"
             )
-        
+
         .add_property("width",
                       &Map::width,
                       &Map::set_width,

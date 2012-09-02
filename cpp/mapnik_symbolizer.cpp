@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2006 Artem Pavlenko, Jean-Francois Doyon
@@ -19,10 +19,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
+// boost
 #include <boost/python.hpp>
 
+// mapnik
 //symbolizer typdef here rather than mapnik/symbolizer.hpp
 #include <mapnik/rule.hpp>
 
@@ -39,68 +40,68 @@ using mapnik::shield_symbolizer;
 using mapnik::text_symbolizer;
 using mapnik::building_symbolizer;
 using mapnik::markers_symbolizer;
-using mapnik::glyph_symbolizer;
 
 struct get_symbolizer_type : public boost::static_visitor<std::string>
 {
 public:
     get_symbolizer_type() {}
-        
+
     std::string operator () ( const  point_symbolizer & /*sym*/ )
     {
         return "point";
     }
-    
+
     std::string operator () ( const line_symbolizer & /*sym*/ )
     {
         return "line";
     }
-    
+
     std::string operator () ( const line_pattern_symbolizer & /*sym*/ )
     {
         return "line_pattern";
     }
-    
+
     std::string operator () ( const polygon_symbolizer & /*sym*/ )
     {
         return "polygon";
     }
-    
+
     std::string operator () ( const polygon_pattern_symbolizer & /*sym*/ )
     {
         return "polygon_pattern";
     }
-    
+
     std::string operator () ( const raster_symbolizer & /*sym*/ )
     {
         return "raster";
     }
-    
+
     std::string operator () ( const shield_symbolizer & /*sym*/ )
     {
         return "shield";
     }
-    
+
     std::string operator () ( const text_symbolizer & /*sym*/ )
     {
         return "text";
     }
-    
+
     std::string operator () ( const building_symbolizer & /*sym*/ )
     {
         return "building";
     }
-    
+
     std::string operator () ( const markers_symbolizer & /*sym*/ )
     {
         return "markers";
     }
-
-    std::string operator () ( const glyph_symbolizer & /*sym*/ )
+ 
+    template <typename Symbolizer>
+    std::string operator() ( Symbolizer const& sym)
     {
-        return "glyph";
+        boost::ignore_unused_variable_warning(sym);
+        return "unknown";
     }
-
 };
 
 std::string get_symbol_type(const symbolizer& symbol)
@@ -160,11 +161,6 @@ const markers_symbolizer& markers_( const symbolizer& symbol )
     return boost::get<markers_symbolizer>(symbol);
 }
 
-const glyph_symbolizer& glyph_( const symbolizer& symbol )
-{
-    return boost::get<glyph_symbolizer>(symbol);
-}
-
 void export_symbolizer()
 {
     using namespace boost::python;
@@ -202,10 +198,6 @@ void export_symbolizer()
 
         .def("markers",markers_,
              return_value_policy<copy_const_reference>())
-
-        .def("glyph",glyph_,
-             return_value_policy<copy_const_reference>())
-
         ;
 }
 

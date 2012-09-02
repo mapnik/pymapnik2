@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2006 Artem Pavlenko, Jean-Francois Doyon
@@ -19,10 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
 // boost
 #include <boost/python.hpp>
+
 // mapnik
 #include <mapnik/feature.hpp>
 #include <mapnik/datasource.hpp>
@@ -49,13 +49,14 @@ inline object pass_through(object const& o) { return o; }
 
 inline mapnik::feature_ptr next(mapnik::featureset_ptr const& itr)
 {
-    if (!itr)
+    mapnik::feature_ptr f = itr->next();
+    if (!f)
     {
         PyErr_SetString(PyExc_StopIteration, "No more features.");
         boost::python::throw_error_already_set();
     }
 
-    return itr->next();
+    return f;
 }
 
 }
@@ -65,7 +66,7 @@ void export_featureset()
     using namespace boost::python;
     using mapnik::Feature;
     using mapnik::Featureset;
-    
+
     class_<Featureset,boost::shared_ptr<Featureset>,
         boost::noncopyable>("Featureset",no_init)
         .def("__iter__",pass_through)

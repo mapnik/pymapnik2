@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Map srs="+init=epsg:32630" background-color="rgb(255,255,255)" base="../data/good_maps" minimum-version="0.7.2">
+<Map srs="+init=epsg:32630" background-color="rgb(255,255,255)" base="../data/good_maps">
     <Style name="BANDED">
         <Rule>
             <RasterSymbolizer>
@@ -57,7 +57,7 @@
         <StyleName>DISCRETE RAINBOW</StyleName>
         <Datasource>
             <Parameter name="band">1</Parameter>
-            <Parameter name="file">/home/kiorky/minitage/others/mapnik-egg-py27/src/mapnik/tests/python_tests/../data/good_maps/../raster/dataraster.tif</Parameter>
+            <Parameter name="file">/home/ubuntu/megg-2.1.0/src/mapnik/tests/python_tests/../data/good_maps/../raster/dataraster.tif</Parameter>
             <Parameter name="type">gdal</Parameter>
         </Datasource>
     </Layer>

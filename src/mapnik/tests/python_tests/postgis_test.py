@@ -10,7 +10,6 @@ import os, mapnik
 MAPNIK_TEST_DBNAME = 'mapnik-tmp-postgis-test-db'
 POSTGIS_TEMPLATE_DBNAME = 'template_postgis'
 SHAPEFILE = os.path.join(execution_path('.'),'../data/shp/world_merc.shp')
-SQL_DUMPS = os.path.join(execution_path('.'),'../data/sql')
 
 def setup():
     # All of the paths used are relative, if we run the tests
@@ -112,7 +111,7 @@ INSERT INTO test5(non_id, manual_id, geom) values (0, -1, GeomFromEWKT('SRID=432
 INSERT INTO test5(non_id, manual_id, geom) values (0, 1, GeomFromEWKT('SRID=4326;POINT(0 0)'));
 """
 
-insert_table_6 = '''
+insert_table_5b = '''
 CREATE TABLE "tableWithMixedCase"(gid serial PRIMARY KEY, geom geometry);
 INSERT INTO "tableWithMixedCase"(geom) values (ST_MakePoint(0,0));
 INSERT INTO "tableWithMixedCase"(geom) values (ST_MakePoint(0,1));
@@ -120,15 +119,16 @@ INSERT INTO "tableWithMixedCase"(geom) values (ST_MakePoint(1,0));
 INSERT INTO "tableWithMixedCase"(geom) values (ST_MakePoint(1,1));
 '''
 
-insert_table_7 = '''
+insert_table_6 = '''
 CREATE TABLE test6(first_id int4, second_id int4,PRIMARY KEY (first_id,second_id), geom geometry);
 INSERT INTO test6(first_id, second_id, geom) values (0, 0, GeomFromEWKT('SRID=4326;POINT(0 0)'));
 '''
 
-insert_table_8 = '''
+insert_table_7 = '''
 CREATE TABLE test7(gid serial PRIMARY KEY, geom geometry);
 INSERT INTO test7(gid, geom) values (1, GeomFromEWKT('SRID=4326;GEOMETRYCOLLECTION(MULTILINESTRING((10 10,20 20,10 40),(40 40,30 30,40 20,30 10)),LINESTRING EMPTY)'));
 '''
+
 
 def postgis_setup():
     call('dropdb %s' % MAPNIK_TEST_DBNAME,silent=True)
@@ -140,9 +140,9 @@ def postgis_setup():
     call('''psql -q %s -c "%s"''' % (MAPNIK_TEST_DBNAME,insert_table_3),silent=False)
     call('''psql -q %s -c "%s"''' % (MAPNIK_TEST_DBNAME,insert_table_4),silent=False)
     call('''psql -q %s -c "%s"''' % (MAPNIK_TEST_DBNAME,insert_table_5),silent=False)
-    call("""psql -q %s -c '%s'""" % (MAPNIK_TEST_DBNAME,insert_table_6),silent=False)
+    call("""psql -q %s -c '%s'""" % (MAPNIK_TEST_DBNAME,insert_table_5b),silent=False)
+    call('''psql -q %s -c "%s"''' % (MAPNIK_TEST_DBNAME,insert_table_6),silent=False)
     call('''psql -q %s -c "%s"''' % (MAPNIK_TEST_DBNAME,insert_table_7),silent=False)
-    call('''psql -q %s -c "%s"''' % (MAPNIK_TEST_DBNAME,insert_table_8),silent=False)
 
 def postgis_takedown():
     pass
@@ -173,6 +173,7 @@ if 'postgis' in mapnik.DatasourceCache.instance().plugin_names() \
         eq_(feature['subregion'],29)
         eq_(feature['lon'],-61.783)
         eq_(feature['lat'],17.078)
+        eq_(ds.describe()['geometry_type'],mapnik.DataGeometryType.Polygon)
 
     def test_subquery():
         ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='(select * from world_merc) as w')
@@ -190,6 +191,7 @@ if 'postgis' in mapnik.DatasourceCache.instance().plugin_names() \
         eq_(feature['subregion'],29)
         eq_(feature['lon'],-61.783)
         eq_(feature['lat'],17.078)
+        eq_(ds.describe()['geometry_type'],mapnik.DataGeometryType.Polygon)
 
         ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='(select gid,geom,fips as _fips from world_merc) as w')
         fs = ds.featureset()
@@ -197,14 +199,119 @@ if 'postgis' in mapnik.DatasourceCache.instance().plugin_names() \
         eq_(feature['gid'],1)
         eq_(feature['_fips'],u'AC')
         eq_(len(feature),2)
+        eq_(ds.describe()['geometry_type'],mapnik.DataGeometryType.Polygon)
+
+    def test_empty_db():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='empty')
+        fs = ds.featureset()
+        feature = None
+        try:
+            feature = fs.next()
+        except StopIteration:
+            pass
+        eq_(feature,None)
+        eq_(ds.describe()['geometry_type'],mapnik.DataGeometryType.Collection)
 
     def test_geometry_detection():
         ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='test',
                             geometry_field='geom')
+        eq_(ds.describe()['geometry_type'],mapnik.DataGeometryType.Collection)
+
+        # will fail with postgis 2.0 because it automatically adds a geometry_columns entry
+        #ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='test',
+        #                   geometry_field='geom',
+        #                    row_limit=1)
+        #eq_(ds.describe()['geometry_type'],mapnik.DataGeometryType.Point)
+
+    @raises(RuntimeError)
+    def test_that_nonexistant_query_field_throws(**kwargs):
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='empty')
+        eq_(len(ds.fields()),1)
+        eq_(ds.fields(),['key'])
+        eq_(ds.field_types(),['int'])
+        query = mapnik.Query(ds.envelope())
+        for fld in ds.fields():
+            query.add_property_name(fld)
+        # also add an invalid one, triggering throw
+        query.add_property_name('bogus')
+        fs = ds.features(query)
+
+    def test_auto_detection_of_unique_feature_id_32_bit():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='test2',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+        fs = ds.featureset()
+        eq_(fs.next()['manual_id'],0)
+        eq_(fs.next()['manual_id'],1)
+        eq_(fs.next()['manual_id'],1000)
+        eq_(fs.next()['manual_id'],-1000)
+        eq_(fs.next()['manual_id'],2147483647)
+        eq_(fs.next()['manual_id'],-2147483648)
+
+        fs = ds.featureset()
+        eq_(fs.next().id(),0)
+        eq_(fs.next().id(),1)
+        eq_(fs.next().id(),1000)
+        eq_(fs.next().id(),-1000)
+        eq_(fs.next().id(),2147483647)
+        eq_(fs.next().id(),-2147483648)
+
+    def test_auto_detection_will_fail_since_no_primary_key():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='test3',
+                            geometry_field='geom',
+                            autodetect_key_field=False)
+        fs = ds.featureset()
+        feat = fs.next()
+        eq_(feat['manual_id'],0)
+        # will fail: https://github.com/mapnik/mapnik/issues/895
+        #eq_(feat['non_id'],9223372036854775807)
+        eq_(fs.next()['manual_id'],1)
+        eq_(fs.next()['manual_id'],1000)
+        eq_(fs.next()['manual_id'],-1000)
+        eq_(fs.next()['manual_id'],2147483647)
+        eq_(fs.next()['manual_id'],-2147483648)
+
+        # since no valid primary key will be detected the fallback
+        # is auto-incrementing counter
+        fs = ds.featureset()
+        eq_(fs.next().id(),1)
+        eq_(fs.next().id(),2)
+        eq_(fs.next().id(),3)
+        eq_(fs.next().id(),4)
+        eq_(fs.next().id(),5)
+        eq_(fs.next().id(),6)
+
+    @raises(RuntimeError)
+    def test_auto_detection_will_fail_and_should_throw():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='test3',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+        fs = ds.featureset()
+
+    def test_auto_detection_of_unique_feature_id_64_bit():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='test4',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+        fs = ds.featureset()
+        eq_(fs.next()['manual_id'],0)
+        eq_(fs.next()['manual_id'],1)
+        eq_(fs.next()['manual_id'],1000)
+        eq_(fs.next()['manual_id'],-1000)
+        eq_(fs.next()['manual_id'],2147483647)
+        eq_(fs.next()['manual_id'],-2147483648)
+
+        fs = ds.featureset()
+        eq_(fs.next().id(),0)
+        eq_(fs.next().id(),1)
+        eq_(fs.next().id(),1000)
+        eq_(fs.next().id(),-1000)
+        eq_(fs.next().id(),2147483647)
+        eq_(fs.next().id(),-2147483648)
 
     def test_disabled_auto_detection_and_subquery():
         ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='''(select geom, 'a'::varchar as name from test2) as t''',
-                            geometry_field='geom')
+                            geometry_field='geom',
+                            autodetect_key_field=False)
         fs = ds.featureset()
         feat = fs.next()
         eq_(feat.id(),1)
@@ -225,11 +332,49 @@ if 'postgis' in mapnik.DatasourceCache.instance().plugin_names() \
         eq_(feat.id(),6)
         eq_(feat['name'],'a')
 
+    def test_auto_detection_and_subquery_including_key():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='''(select geom, manual_id from test2) as t''',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+        fs = ds.featureset()
+        eq_(fs.next()['manual_id'],0)
+        eq_(fs.next()['manual_id'],1)
+        eq_(fs.next()['manual_id'],1000)
+        eq_(fs.next()['manual_id'],-1000)
+        eq_(fs.next()['manual_id'],2147483647)
+        eq_(fs.next()['manual_id'],-2147483648)
+
+        fs = ds.featureset()
+        eq_(fs.next().id(),0)
+        eq_(fs.next().id(),1)
+        eq_(fs.next().id(),1000)
+        eq_(fs.next().id(),-1000)
+        eq_(fs.next().id(),2147483647)
+        eq_(fs.next().id(),-2147483648)
+
+    @raises(RuntimeError)
+    def test_auto_detection_of_invalid_numeric_primary_key():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='''(select geom, manual_id::numeric from test2) as t''',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+
+    @raises(RuntimeError)
+    def test_auto_detection_of_invalid_multiple_keys():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='''test6''',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+
+    @raises(RuntimeError)
+    def test_auto_detection_of_invalid_multiple_keys_subquery():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='''(select first_id,second_id,geom from test6) as t''',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
 
     def test_manually_specified_feature_id_field():
         ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='test4',
                             geometry_field='geom',
-                            key_field='manual_id')
+                            key_field='manual_id',
+                            autodetect_key_field=True)
         fs = ds.featureset()
         eq_(fs.next()['manual_id'],0)
         eq_(fs.next()['manual_id'],1)
@@ -248,7 +393,8 @@ if 'postgis' in mapnik.DatasourceCache.instance().plugin_names() \
 
     def test_numeric_type_feature_id_field():
         ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='test5',
-                            geometry_field='geom')
+                            geometry_field='geom',
+                            autodetect_key_field=False)
         fs = ds.featureset()
         eq_(fs.next()['manual_id'],-1)
         eq_(fs.next()['manual_id'],1)
@@ -256,6 +402,40 @@ if 'postgis' in mapnik.DatasourceCache.instance().plugin_names() \
         fs = ds.featureset()
         eq_(fs.next().id(),1)
         eq_(fs.next().id(),2)
+
+    def test_querying_table_with_mixed_case():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='"tableWithMixedCase"',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+        fs = ds.featureset()
+        for id in range(1,5):
+            eq_(fs.next().id(),id)
+
+    def test_querying_subquery_with_mixed_case():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='(SeLeCt * FrOm "tableWithMixedCase") as MixedCaseQuery',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+        fs = ds.featureset()
+        for id in range(1,5):
+            eq_(fs.next().id(),id)
+
+    def test_bbox_token_in_subquery1():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='''
+           (SeLeCt * FrOm "tableWithMixedCase" where geom && !bbox! ) as MixedCaseQuery''',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+        fs = ds.featureset()
+        for id in range(1,5):
+            eq_(fs.next().id(),id)
+
+    def test_bbox_token_in_subquery2():
+        ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='''
+           (SeLeCt * FrOm "tableWithMixedCase" where ST_Intersects(geom,!bbox!) ) as MixedCaseQuery''',
+                            geometry_field='geom',
+                            autodetect_key_field=True)
+        fs = ds.featureset()
+        for id in range(1,5):
+            eq_(fs.next().id(),id)
 
     def test_empty_geom():
         ds = mapnik.PostGIS(dbname=MAPNIK_TEST_DBNAME,table='test7',

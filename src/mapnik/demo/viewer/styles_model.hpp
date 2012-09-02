@@ -1,5 +1,6 @@
 /* This file is part of Mapnik (c++ mapping toolkit)
- * Copyright (C) 2007 Artem Pavlenko
+ *
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * Mapnik is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +23,11 @@
 #define STYLE_MODEL_HPP
 
 #include <QAbstractItemModel>
+
+#ifndef Q_MOC_RUN
 #include <mapnik/map.hpp>
+#endif
+
 #include <boost/scoped_ptr.hpp>
 
 class node;
@@ -32,11 +37,11 @@ class StyleModel : public QAbstractItemModel
   public:
       StyleModel(boost::shared_ptr<mapnik::Map> map, QObject * parent=0);
       ~StyleModel();
-      // interface 
+      // interface
       QModelIndex index  (int row, int col, QModelIndex const& parent = QModelIndex()) const;
       QModelIndex parent (QModelIndex const& child) const;
       int rowCount( QModelIndex const& parent = QModelIndex()) const;
-      int columnCount( QModelIndex const& parent = QModelIndex()) const; 
+      int columnCount( QModelIndex const& parent = QModelIndex()) const;
       QVariant  data(const QModelIndex & index, int role = Qt::DisplayRole) const;
    private:
       //boost::shared_ptr<mapnik::Map> map_;

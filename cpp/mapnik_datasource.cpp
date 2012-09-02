@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2006 Artem Pavlenko, Jean-Francois Doyon
@@ -19,16 +19,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
+
 // boost
 #include <boost/python.hpp>
 #include <boost/python/detail/api_placeholder.hpp>
+
 // stl
 #include <sstream>
 #include <vector>
 
 // mapnik
 #include <mapnik/box2d.hpp>
+#include <mapnik/coord.hpp>
+#include <mapnik/query.hpp>
 #include <mapnik/datasource.hpp>
 #include <mapnik/datasource_cache.hpp>
 #include <mapnik/feature_layer_desc.hpp>
@@ -36,12 +39,11 @@
 
 
 using mapnik::datasource;
-using mapnik::point_datasource;
 using mapnik::memory_datasource;
 using mapnik::layer_descriptor;
 using mapnik::attribute_descriptor;
 
-namespace  
+namespace
 {
 //user-friendly wrapper that uses Python dictionary
 using namespace boost::python;
@@ -54,17 +56,17 @@ boost::shared_ptr<mapnik::datasource> create_datasource(const dict& d)
     {
         std::string key = extract<std::string>(keys[i]);
         object obj = d[key];
-        
+
         if (key == "bind")
         {
             bind = extract<bool>(obj)();
             continue;
         }
-        
+
         extract<std::string> ex0(obj);
         extract<int> ex1(obj);
         extract<double> ex2(obj);
-            
+
         if (ex0.check())
         {
             params[key] = ex0();
@@ -78,34 +80,19 @@ boost::shared_ptr<mapnik::datasource> create_datasource(const dict& d)
             params[key] = ex2();
         }
     }
-        
+
     return mapnik::datasource_cache::create(params, bind);
 }
-    
-std::string describe(boost::shared_ptr<mapnik::datasource> const& ds)
-{
-    std::stringstream ss;
-    if (ds)
-    {
-        ss << ds->get_descriptor() << "\n";
-    }
-    else
-    {
-        ss << "Null\n";
-    }
-    return ss.str();
-}
-    
-std::string encoding(boost::shared_ptr<mapnik::datasource> const& ds)
-{
-    layer_descriptor ld = ds->get_descriptor();
-    return ld.get_encoding();
-}
 
-std::string name(boost::shared_ptr<mapnik::datasource> const& ds)
+boost::python::dict describe(boost::shared_ptr<mapnik::datasource> const& ds)
 {
-    layer_descriptor ld = ds->get_descriptor();
-    return ld.get_name();
+    boost::python::dict description;
+    mapnik::layer_descriptor ld = ds->get_descriptor();
+    description["type"] = ds->type();
+    description["name"] = ld.get_name();
+    description["geometry_type"] = ds->get_geometry_type();
+    description["encoding"] = ld.get_encoding();
+    return description;
 }
 
 boost::python::list fields(boost::shared_ptr<mapnik::datasource> const& ds)
@@ -134,7 +121,7 @@ boost::python::list field_types(boost::shared_ptr<mapnik::datasource> const& ds)
         std::vector<attribute_descriptor>::const_iterator it = desc_ar.begin();
         std::vector<attribute_descriptor>::const_iterator end = desc_ar.end();
         for (; it != end; ++it)
-        {  
+        {
             unsigned type = it->get_type();
             if (type == mapnik::Integer)
                 // this crashes, so send back strings instead
@@ -162,30 +149,36 @@ boost::python::list field_types(boost::shared_ptr<mapnik::datasource> const& ds)
 void export_datasource()
 {
     using namespace boost::python;
-    
+
+    enum_<mapnik::datasource::datasource_t>("DataType")
+        .value("Vector",mapnik::datasource::Vector)
+        .value("Raster",mapnik::datasource::Raster)
+        ;
+
+    enum_<mapnik::datasource::geometry_t>("DataGeometryType")
+        .value("Point",mapnik::datasource::Point)
+        .value("LineString",mapnik::datasource::LineString)
+        .value("Polygon",mapnik::datasource::Polygon)
+        .value("Collection",mapnik::datasource::Collection)
+        ;
+
     class_<datasource,boost::shared_ptr<datasource>,
         boost::noncopyable>("Datasource",no_init)
+        .def("type",&datasource::type)
+        .def("geometry_type",&datasource::get_geometry_type)
+        .def("describe",&describe)
         .def("envelope",&datasource::envelope)
-        .def("descriptor",&datasource::get_descriptor) //todo
         .def("features",&datasource::features)
         .def("bind",&datasource::bind)
         .def("fields",&fields)
         .def("field_types",&field_types)
-        .def("encoding",&encoding) //todo expose as property
-        .def("name",&name)
         .def("features_at_point",&datasource::features_at_point)
-        .def("params",&datasource::params,return_value_policy<copy_const_reference>(), 
-             "The configuration parameters of the data source. "  
+        .def("params",&datasource::params,return_value_policy<copy_const_reference>(),
+             "The configuration parameters of the data source. "
              "These vary depending on the type of data source.")
         ;
-    
-    def("Describe",&describe);
+
     def("CreateDatasource",&create_datasource);
-
-    class_<point_datasource, bases<datasource>, boost::noncopyable>("PointDatasource", init<>())
-        .def("add_point",&point_datasource::add_point)
-        ;
-
 
     class_<memory_datasource, bases<datasource>, boost::noncopyable>("MemoryDatasource", init<>())
         .def("add_feature",&memory_datasource::push,

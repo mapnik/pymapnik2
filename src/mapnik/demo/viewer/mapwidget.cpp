@@ -1,5 +1,6 @@
 /* This file is part of Mapnik (c++ mapping toolkit)
- * Copyright (C) 2006 Artem Pavlenko
+ *
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * Mapnik is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,11 +24,23 @@
 #include <boost/bind.hpp>
 
 #include <mapnik/agg_renderer.hpp>
+#include <mapnik/graphics.hpp>
+#include <mapnik/grid/grid_renderer.hpp>
 #include <mapnik/layer.hpp>
 #include <mapnik/projection.hpp>
 #include <mapnik/scale_denominator.hpp>
 #include <mapnik/ctrans.hpp>
 #include <mapnik/memory_datasource.hpp>
+#include <mapnik/feature_kv_iterator.hpp>
+#include <mapnik/config_error.hpp>
+#include <mapnik/image_util.hpp>
+
+#ifdef HAVE_CAIRO
+// cairo
+#include <mapnik/cairo_renderer.hpp>
+#include <cairomm/surface.h>
+#endif
+
 #include "mapwidget.hpp"
 #include "info_dialog.hpp"
 
@@ -41,6 +54,7 @@ using mapnik::geometry_ptr;
 using mapnik::CoordTransform;
 using mapnik::projection;
 using mapnik::scale_denominator;
+using mapnik::feature_kv_iterator;
 
 double scales [] = {279541132.014,
                     139770566.007,
@@ -63,7 +77,7 @@ double scales [] = {279541132.014,
                     1066.36479192,
                     533.182395962};
 
-MapWidget::MapWidget(QWidget *parent) 
+MapWidget::MapWidget(QWidget *parent)
    : QWidget(parent),
      map_(),
      selected_(1),
@@ -77,7 +91,8 @@ MapWidget::MapWidget(QWidget *parent)
      first_(true),
      pen_(QColor(0,0,255,96)),
      selectedLayer_(-1),
-     scaling_factor_(1.0)
+     scaling_factor_(1.0),
+     cur_renderer_(AGG)
 {
    pen_.setWidth(3);
    pen_.setCapStyle(Qt::RoundCap);
@@ -90,9 +105,9 @@ void MapWidget::setTool(eTool tool)
 }
 
 void MapWidget::paintEvent(QPaintEvent*)
-{  
+{
    QPainter painter(this);
-   
+
    if (drag_)
    {
       if (cur_tool_ == ZoomToBox)
@@ -119,7 +134,7 @@ void MapWidget::paintEvent(QPaintEvent*)
    }
    painter.end();
 }
- 
+
 void MapWidget::resizeEvent(QResizeEvent * ev)
 {
    if (map_)
@@ -128,10 +143,10 @@ void MapWidget::resizeEvent(QResizeEvent * ev)
       updateMap();
    }
 }
-   
+
 void MapWidget::mousePressEvent(QMouseEvent* e)
 {
-   if (e->button()==Qt::LeftButton) 
+   if (e->button()==Qt::LeftButton)
    {
       if (cur_tool_ == ZoomToBox || cur_tool_==Pan)
       {
@@ -142,19 +157,19 @@ void MapWidget::mousePressEvent(QMouseEvent* e)
       else if (cur_tool_==Info)
       {
          if (map_)
-         {     
+         {
             QVector<QPair<QString,QString> > info;
-            
+
             projection map_proj(map_->srs()); // map projection
             double scale_denom = scale_denominator(*map_,map_proj.is_geographic());
             CoordTransform t(map_->width(),map_->height(),map_->get_current_extent());
-            
+
             for (unsigned index = 0; index <  map_->layer_count();++index)
             {
                if (int(index) != selectedLayer_) continue;
-               
+
                layer & layer = map_->layers()[index];
-               if (!layer.isVisible(scale_denom)) continue;
+               if (!layer.visible(scale_denom)) continue;
                std::string name = layer.name();
                double x = e->x();
                double y = e->y();
@@ -163,35 +178,35 @@ void MapWidget::mousePressEvent(QMouseEvent* e)
                mapnik::proj_transform prj_trans(map_proj,layer_proj);
                //std::auto_ptr<mapnik::memory_datasource> data(new mapnik::memory_datasource);
                mapnik::featureset_ptr fs = map_->query_map_point(index,x,y);
-                        
+
                if (fs)
                {
                   feature_ptr feat  = fs->next();
-                  if (feat)   
+                  if (feat)
                   {
-                     std::map<std::string,mapnik::value> const& props = feat->props();
-                     std::map<std::string,mapnik::value>::const_iterator itr=props.begin();
-                     for (; itr!=props.end();++itr)
-                     {
-                        if (itr->second.to_string().length() > 0)
-                        {
-                           info.push_back(QPair<QString,QString>(QString(itr->first.c_str()),
-                                                                 itr->second.to_string().c_str()));
-                        }
-                     }
-                     typedef mapnik::coord_transform2<mapnik::CoordTransform,mapnik::geometry_type> path_type;
-                     
+
+                      feature_kv_iterator itr(*feat,true);
+                      feature_kv_iterator end(*feat);
+
+                      for ( ;itr!=end; ++itr)
+                      {
+                          info.push_back(QPair<QString,QString>(QString(boost::get<0>(*itr).c_str()),
+                                                                boost::get<1>(*itr).to_string().c_str()));
+                      }
+
+                      typedef mapnik::coord_transform<mapnik::CoordTransform,mapnik::geometry_type> path_type;
+
                      for  (unsigned i=0; i<feat->num_geometries();++i)
                      {
-                        mapnik::geometry_type & geom = feat->get_geometry(i);                       
+                        mapnik::geometry_type & geom = feat->get_geometry(i);
                         path_type path(t,geom,prj_trans);
-                        if (geom.num_points() > 0)
+                        if (geom.size() > 0)
                         {
                            QPainterPath qpath;
                            double x,y;
                            path.vertex(&x,&y);
                            qpath.moveTo(x,y);
-                           for (unsigned j = 1; j < geom.num_points(); ++j)
+                           for (unsigned j = 1; j < geom.size(); ++j)
                            {
                               path.vertex(&x,&y);
                               qpath.lineTo(x,y);
@@ -208,7 +223,7 @@ void MapWidget::mousePressEvent(QMouseEvent* e)
                      }
                   }
                }
-                  
+
                if (info.size() > 0)
                {
                   info_dialog info_dlg(info,this);
@@ -216,34 +231,34 @@ void MapWidget::mousePressEvent(QMouseEvent* e)
                   break;
                }
             }
-            
+
             // remove annotation layer
             map_->layers().erase(remove_if(map_->layers().begin(),
                                            map_->layers().end(),
                                            bind(&layer::name,_1) == "*annotations*")
                                  , map_->layers().end());
          }
-      } 
+      }
    }
-   else if (e->button()==Qt::RightButton) 
-   {    
+   else if (e->button()==Qt::RightButton)
+   {
       //updateMap();
    }
 }
-    
+
 void MapWidget::mouseMoveEvent(QMouseEvent* e)
-{    
+{
    if (cur_tool_ == ZoomToBox || cur_tool_==Pan)
    {
       end_x_ = e->x();
       end_y_ = e->y();
       update();
-   }    
+   }
 }
 
 void MapWidget::mouseReleaseEvent(QMouseEvent* e)
 {
-   if (e->button()==Qt::LeftButton) 
+   if (e->button()==Qt::LeftButton)
    {
       end_x_ = e->x();
       end_y_ = e->y();
@@ -252,7 +267,7 @@ void MapWidget::mouseReleaseEvent(QMouseEvent* e)
          drag_=false;
          if (map_)
          {
-            CoordTransform t(map_->width(),map_->height(),map_->get_current_extent());      
+            CoordTransform t(map_->width(),map_->height(),map_->get_current_extent());
             box2d<double> box = t.backward(box2d<double>(start_x_,start_y_,end_x_,end_y_));
             map_->zoom_to_box(box);
             updateMap();
@@ -267,18 +282,44 @@ void MapWidget::mouseReleaseEvent(QMouseEvent* e)
             int cy = int(0.5 * map_->height());
             int dx = end_x_ - start_x_;
             int dy = end_y_ - start_y_;
-            map_->pan(cx - dx ,cy - dy); 
+            map_->pan(cx - dx ,cy - dy);
             updateMap();
          }
       }
    }
 }
 
+void MapWidget::wheelEvent(QWheelEvent* e)
+{
+   if (!map_)
+   {
+      return;
+   }
 
-void MapWidget::keyPressEvent(QKeyEvent *e) 
+   QPoint corner(map_->width(), map_->height());
+   QPoint zoomCoords;
+   double zoom;
+   if (e->delta() > 0)
+   {
+      zoom = 0.5;
+      QPoint center = corner / 2;
+      QPoint delta = e->pos() - center;
+      zoomCoords = zoom * delta + center;
+   }
+   else
+   {
+      zoom = 2.0;
+      zoomCoords = corner - e->pos();
+   }
+
+   map_->pan_and_zoom(zoomCoords.x(), zoomCoords.y(), zoom);
+   updateMap();
+}
+
+void MapWidget::keyPressEvent(QKeyEvent *e)
 {
    std::cout << "key pressed:"<< e->key()<<"\n";
-   switch (e->key()) { 
+   switch (e->key()) {
       case Qt::Key_Minus:
          zoomOut();
          break;
@@ -294,10 +335,10 @@ void MapWidget::keyPressEvent(QKeyEvent *e)
          break;
       case Qt::Key_Down:
          panDown();
-         break;  
+         break;
       case Qt::Key_Left:
          panLeft();
-         break; 
+         break;
       case Qt::Key_Right:
          panRight();
          break;
@@ -309,7 +350,7 @@ void MapWidget::keyPressEvent(QKeyEvent *e)
          break;
       case 51:
          zoomToLevel(12);
-         break;   
+         break;
       case 52:
          zoomToLevel(13);
          break;
@@ -318,7 +359,7 @@ void MapWidget::keyPressEvent(QKeyEvent *e)
          break;
       case 54:
          zoomToLevel(15);
-         break;   
+         break;
       case 55:
          zoomToLevel(16);
          break;
@@ -327,12 +368,12 @@ void MapWidget::keyPressEvent(QKeyEvent *e)
          break;
       case 57:
          zoomToLevel(18);
-         break;   
+         break;
    default:
        QWidget::keyPressEvent(e);
    }
-   
-   
+
+
 }
 
 void MapWidget::zoomToBox(mapnik::box2d<double> const& bbox)
@@ -344,7 +385,7 @@ void MapWidget::zoomToBox(mapnik::box2d<double> const& bbox)
    }
 }
 
-void MapWidget::defaultView()  
+void MapWidget::defaultView()
 {
    if (map_)
    {
@@ -354,7 +395,7 @@ void MapWidget::defaultView()
    }
 }
 
-void MapWidget::zoomIn() 
+void MapWidget::zoomIn()
 {
    if (map_)
    {
@@ -363,7 +404,7 @@ void MapWidget::zoomIn()
    }
 }
 
-void MapWidget::zoomOut() 
+void MapWidget::zoomOut()
 {
    if (map_)
    {
@@ -406,12 +447,12 @@ void MapWidget::panLeft()
 }
 
 void MapWidget::panRight()
-{ 
+{
    if (map_)
    {
       double cx = 0.5*map_->width();
       double cy = 0.5*map_->height();
-      map_->pan(int(cx + cx * 0.25),int(cy)); 
+      map_->pan(int(cx + cx * 0.25),int(cy));
       updateMap();
    }
 }
@@ -425,11 +466,11 @@ void MapWidget::zoomToLevel(int level)
       std::cerr << "scale denominator = " << scale_denom << "\n";
       mapnik::box2d<double> ext = map_->get_current_extent();
       double width = static_cast<double>(map_->width());
-      double height= static_cast<double>(map_->height()); 
+      double height= static_cast<double>(map_->height());
       mapnik::coord2d pt = ext.center();
 
       double res = scale_denom * 0.00028;
-      
+
       mapnik::box2d<double> box(pt.x - 0.5 * width * res,
                                    pt.y - 0.5 * height*res,
                                    pt.x + 0.5 * width * res,
@@ -439,37 +480,144 @@ void MapWidget::zoomToLevel(int level)
    }
 }
 
-void MapWidget::export_to_file(unsigned ,unsigned ,std::string const&,std::string const&) 
+void MapWidget::export_to_file(unsigned ,unsigned ,std::string const&,std::string const&)
 {
    //image_32 image(width,height);
    //agg_renderer renderer(map,image);
    //renderer.apply();
    //image.saveToFile(filename,type);
+    std::cout << "Export to file .." << std::endl;
 }
-       
+
 void MapWidget::set_scaling_factor(double scaling_factor)
 {
     scaling_factor_ = scaling_factor;
 }
 
-void MapWidget::updateMap() 
-{   
+void render_agg(mapnik::Map const& map, double scaling_factor, QPixmap & pix)
+{
+    unsigned width=map.width();
+    unsigned height=map.height();
+
+    image_32 buf(width,height);
+    mapnik::agg_renderer<image_32> ren(map,buf,scaling_factor);
+
+    try
+    {
+        ren.apply();
+        QImage image((uchar*)buf.raw_data(),width,height,QImage::Format_ARGB32);
+        pix = QPixmap::fromImage(image.rgbSwapped());
+    }
+    catch (mapnik::config_error & ex)
+    {
+        std::cerr << ex.what() << std::endl;
+    }
+    catch (const std::exception & ex)
+    {
+        std::cerr << "exception: " << ex.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cerr << "Unknown exception caught!\n";
+    }
+}
+
+
+void render_grid(mapnik::Map const& map, double scaling_factor, QPixmap & pix)
+{
+    unsigned width=map.width();
+    unsigned height=map.height();
+
+    mapnik::grid buf(width,height,"F_CODE", 1);
+    mapnik::grid_renderer<mapnik::grid> ren(map,buf,scaling_factor);
+
+    try
+    {
+        ren.apply();
+        int * imdata = static_cast<int*>(buf.raw_data());
+
+        QImage image(width,height,QImage::Format_RGB32);
+        for (unsigned i = 0 ; i < height ; ++i)
+        {
+            for (unsigned j = 0 ; j < width ; ++j)
+            {
+                image.setPixel(j,i,qRgb((uint8_t)(imdata[i*width+j]>>8),
+                                        (uint8_t)(imdata[i*width+j+1]>>8),
+                                        (uint8_t)(imdata[i*width+j+2]>>8)));
+            }
+        }
+        pix = QPixmap::fromImage(image);
+    }
+    catch (mapnik::config_error & ex)
+    {
+        std::cerr << ex.what() << std::endl;
+    }
+    catch (const std::exception & ex)
+    {
+        std::cerr << "exception: " << ex.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cerr << "Unknown exception caught!\n";
+    }
+}
+
+
+void render_cairo(mapnik::Map const& map, double scaling_factor, QPixmap & pix)
+{
+
+#ifdef HAVE_CAIRO
+    Cairo::RefPtr<Cairo::ImageSurface> image_surface =
+        Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, map.width(),map.height());
+
+    mapnik::cairo_renderer<Cairo::Surface> png_render(map, image_surface, scaling_factor);
+    png_render.apply();
+
+    image_32 buf(image_surface);
+    QImage image((uchar*)buf.raw_data(),buf.width(),buf.height(),QImage::Format_ARGB32);
+    pix = QPixmap::fromImage(image.rgbSwapped());
+#endif
+}
+
+void MapWidget::updateRenderer(QString const& txt)
+{
+    if (txt == "AGG") cur_renderer_ = AGG;
+    else if (txt == "Cairo") cur_renderer_ = Cairo;
+    else if (txt == "Grid") cur_renderer_ = Grid;
+    std::cerr << "Update renderer called" << std::endl;
+    updateMap();
+}
+
+void MapWidget::updateScaleFactor(double scale_factor)
+{
+    set_scaling_factor(scale_factor);
+    updateMap();
+}
+
+void MapWidget::updateMap()
+{
    if (map_)
    {
-      unsigned width=map_->width();
-      unsigned height=map_->height();
-      
-      image_32 buf(width,height);
+       if (cur_renderer_== AGG)
+       {
+           render_agg(*map_, scaling_factor_, pix_);
+       }
+       else if (cur_renderer_ == Cairo)
+       {
+           render_cairo(*map_, scaling_factor_, pix_);
+       }
+       else if (cur_renderer_ == Grid)
+       {
+           render_grid(*map_, scaling_factor_, pix_);
+       }
+       else
+       {
+           std::cerr << "Unknown renderer..." << std::endl;
+       }
 
-      try 
-      {
-          mapnik::agg_renderer<image_32> ren(*map_,buf,scaling_factor_);
-          ren.apply();
-          
-          QImage image((uchar*)buf.raw_data(),width,height,QImage::Format_ARGB32);
-          pix_=QPixmap::fromImage(image.rgbSwapped());
+       try
+       {
           projection prj(map_->srs()); // map projection
-          
           box2d<double> ext = map_->get_current_extent();
           double x0 = ext.minx();
           double y0 = ext.miny();
@@ -481,10 +629,6 @@ void MapWidget::updateMap()
           update();
           // emit signal to interested widgets
           emit mapViewChanged();
-      }
-      catch (mapnik::config_error & ex)
-      {
-          std::cerr << ex.what() << std::endl;
       }
       catch (...)
       {

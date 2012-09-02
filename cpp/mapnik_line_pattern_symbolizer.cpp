@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2006 Artem Pavlenko, Jean-Francois Doyon
@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
 #include <boost/python.hpp>
 
@@ -38,42 +37,42 @@ using mapnik::parse_path;
 namespace {
 using namespace boost::python;
 
-const std::string get_filename(line_pattern_symbolizer const& t) 
-{ 
-    return path_processor_type::to_string(*t.get_filename()); 
-}
-
-void set_filename(line_pattern_symbolizer & t, std::string const& file_expr) 
-{ 
-    t.set_filename(parse_path(file_expr)); 
-}
-
-}
-
-struct line_pattern_symbolizer_pickle_suite : boost::python::pickle_suite
+const std::string get_filename(line_pattern_symbolizer const& t)
 {
-    static boost::python::tuple
-    getinitargs(const line_pattern_symbolizer& l)
-    {
-        std::string filename = path_processor_type::to_string(*l.get_filename());
-        // FIXME : Do we need "type" parameter at all ?  
-        return boost::python::make_tuple(filename, guess_type(filename));
-    }
-};
+    return path_processor_type::to_string(*t.get_filename());
+}
+
+void set_filename(line_pattern_symbolizer & t, std::string const& file_expr)
+{
+    t.set_filename(parse_path(file_expr));
+}
+
+}
 
 void export_line_pattern_symbolizer()
 {
     using namespace boost::python;
-    
+
     class_<line_pattern_symbolizer>("LinePatternSymbolizer",
                                     init<path_expression_ptr>
                                     ("<image file expression>"))
-        //.def_pickle(line_pattern_symbolizer_pickle_suite())
         .add_property("transform",
-              mapnik::get_svg_transform<line_pattern_symbolizer>,
-              mapnik::set_svg_transform<line_pattern_symbolizer>)
+                      mapnik::get_svg_transform<line_pattern_symbolizer>,
+                      mapnik::set_svg_transform<line_pattern_symbolizer>)
         .add_property("filename",
                       &get_filename,
                       &set_filename)
-        ;    
+        .add_property("comp_op",
+                      &line_pattern_symbolizer::comp_op,
+                      &line_pattern_symbolizer::set_comp_op,
+                      "Set/get the comp-op")
+        .add_property("clip",
+                      &line_pattern_symbolizer::clip,
+                      &line_pattern_symbolizer::set_clip,
+                      "Set/get the line pattern geometry's clipping status")
+        .add_property("smooth",
+                      &line_pattern_symbolizer::smooth,
+                      &line_pattern_symbolizer::set_smooth,
+                      "smooth value (0..1.0)")
+        ;
 }
