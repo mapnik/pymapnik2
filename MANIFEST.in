@@ -1,5 +1,9 @@
 include *.txt *.rst *.cfg becomepil.patch *.sh
 recursive-include src *py
 recursive-include src *
+recursive-include cpp *
+recursive-include agg *
+recursive-include hooks *
 global-exclude *pyc
-global-exclude .*.cfg
+global-exclude .*.cfg *.so *.dylib
+
