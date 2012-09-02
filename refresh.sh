@@ -1,3 +1,4 @@
+M
 #!/usr/bin/env bash
 # Copyright (C) 2010, Mathieu PASQUET <mpa@makina-corpus.com>
 # All rights reserved.
@@ -29,14 +30,18 @@ frsync() {
     echo rsync $@
     rsync $@
 } 
-w="${1:-../../Source/mapnik}"
+w="${1:-$PWD/../mapnik-v2.1.0/}"
 egg=$(dirname $0) 
 cd $egg
 # refresh code
-rm -rf cpp;mkdir cpp
+rm -rf cpp
+mkdir cpp
 cp -vrf $w/bindings/python/*pp cpp/
 frsync -a  ${w}/deps/agg/include/ agg/include/
 # refresh tests
+rm -rf src/mapnik/tests/python_tests/
+mkdir src/mapnik/tests/python_tests/
+touch src/mapnik/tests/python_tests/__init__.py
 frsync -av  ${w}/tests/python_tests/ src/mapnik/tests/python_tests/
 for i in $(find src/mapnik/tests/ -name '*.py');do
     #sed -re "s/\.\.\/data/\.\/data/g" -i $i
@@ -44,6 +49,7 @@ for i in $(find src/mapnik/tests/ -name '*.py');do
     sed -re "s/from utilities/from mapnik.tests.python_tests.utilities/g" -i $i
 done
 # refresh test resources
+rm -rf src/mapnik/tests/data/
 frsync -a --delete  ${w}/tests/data/ src/mapnik/tests/data/
 frsync -a --delete  ${w}/demo/  src/mapnik/demo/
 for i in  $w/bindings/python/mapnik/*py;do
@@ -51,7 +57,11 @@ for i in  $w/bindings/python/mapnik/*py;do
         cp -v $i src/mapnik/
     fi
 done
+echo "------------------------------------------------------------------"
 echo "You Need to manually migrate: $w/bindings/python/mapnik/__init__.py"
-#echo "With  src/mapnik/__init__.py"
- 
+echo "in $PWD/src/mapnik/__init__.py"
+diff=$PWD/initdiff.diff
+echo "diff is in $diff"
+diff -ubBr $w//bindings/python/mapnik/__init__.py $PWD/src/mapnik/__init__.py >$diff
+
 # vim:set et sts=4 ts=4 tw=0:

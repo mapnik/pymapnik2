@@ -1,36 +1,46 @@
 import os
 import sys
-
 from setuptools import setup, find_packages, extension
 
-# we do not have the module installed yet.
+# we do not have the mapnik.utils module installed yet
+# just load it with exec
 mapnik_utils = {}
 exec open('src/mapnik/utils.py').read() in mapnik_utils
 read = mapnik_utils['read']
 get_compilation_flags = mapnik_utils['get_compilation_flags']
+summary = mapnik_utils['summary']
 
 README = read(('README.rst',))
 CHANGELOG = read(('CHANGES.rst',))
 long_description = '\n'.join([README, CHANGELOG])+'\n'
 
-compilation_flags = get_compilation_flags()
 sources_dir = os.path.abspath('cpp')
-agg_sources_dir = os.path.join(os.path.abspath('agg'), 'include')
+agg_sources_dir = os.path.join(
+    os.path.abspath('agg'), 'include')
 files = [os.path.join('cpp', f)
          for f in os.listdir(sources_dir)
          if f.endswith('.cpp')]
+compilation_flags = get_compilation_flags()
+# BBB: needed for non standard pyairo.h to be found
+cf = ' '.join(compilation_flags['includes'])
+ldf = ' '.join(compilation_flags['extra_link_args'])
+os.environ['CFLAGS'] = cf
+os.environ['LDFLAGS'] = ldf
 
-install_requires=['setuptools',]
-test_requires = ['nose']
-for lib in compilation_flags['extra_link_args']:
-    if 'cairo' in lib:
-        dep = 'pycairo'
-        if sys.version_info[0] < 3:
-            dep = 'py2cairo'
-        install_requires.append(dep)
-        break
+# pycairo does not play well with setuptools
+# the user may install it himself
+#for lib in compilation_flags['extra_link_args']:
+#    if 'cairo' in lib:
+#        dep = 'pycairo'
+#        if sys.version_info[0] < 3:
+#            dep = 'py2cairo'
+#        install_requires.append(dep)
+#        break
 
 version = '2.0.1.4.dev0'
+summary(compilation_flags)
+install_requires=['setuptools',]
+test_requires = ['nose']
 setup(
     name='mapnik2',
     version = version,

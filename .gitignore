@@ -1,4 +1,5 @@
 *.pyc
+mapnik.env
 .minitage
 test.sh
 
@@ -23,3 +24,12 @@ develop-eggs/*
 .*\.so
 
 *.egg-info
+initdiff.diff
+q
+sys/
+
+t
+d
+downloads
+*.bak
+build.log
