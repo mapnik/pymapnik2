@@ -38,7 +38,8 @@ os.environ['LDFLAGS'] = ldf
 #        break
 
 version = '2.0.1.4.dev0'
-summary(compilation_flags)
+if 'MAPNIK_DEBUG' in os.environ:
+    summary(compilation_flags)
 install_requires=['setuptools',]
 test_requires = ['nose']
 setup(
