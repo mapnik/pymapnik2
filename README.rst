@@ -39,10 +39,10 @@ To use with:
         easy_install -U mapnik2==2.0.1.3
 
 
-    - :mapnik2 library - 2.1.0: == mapnik2 2.1.0
+    - :mapnik2 library - 2.1.0: == mapnik2 2.1.0.1
        ::
 
-        easy_install -U mapnik2==2.1.0
+        easy_install -U mapnik2==2.1.0.1
 
 
 Credits

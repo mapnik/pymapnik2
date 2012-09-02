@@ -4,7 +4,7 @@ Changelog for mapnik2
 2.1.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- fix release
 
 
 2.1.0 (2012-09-02)
