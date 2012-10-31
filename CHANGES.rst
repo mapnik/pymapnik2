@@ -4,7 +4,7 @@ Changelog for mapnik2
 2.1.0.2 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- fix for py26
 
 
 2.1.0.1 (2012-09-02)
