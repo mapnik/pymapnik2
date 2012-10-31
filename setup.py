@@ -37,7 +37,7 @@ os.environ['LDFLAGS'] = ldf
 #        install_requires.append(dep)
 #        break
 
-version = '2.1.0.2.dev0'
+version = '2.1.0.2'
 if 'MAPNIK_DEBUG' in os.environ:
     summary(compilation_flags)
 install_requires=['setuptools',]
