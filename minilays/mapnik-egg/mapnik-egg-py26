@@ -1,5 +1,5 @@
 [minibuild]
-dependencies=geos-3.2 libiconv-1.12 libjpeg libpng-1 libtiff-3 openssl-1 postgis-1.5 postgresql-8.4 proj-4.7 zlib-1.2 jasper-1.900 freetype-2 boost-1 libxml2-2.7 icu-4 cairo-1.12 fontconfig-2.5 cairomm-1 libtool-2.2 pixman-0 gdal-1 mapnik-2 boost-python-1 python-2.6 bzip2-1.0
+dependencies=geos-3.2 libiconv-1.12 libjpeg libpng-1 libtiff-3 openssl-1 postgis-1.5 postgresql-9.1 proj-4.7 zlib-1.2 jasper-1.900 freetype-2 boost-1 libxml2-2.7 icu-4 cairo-1.12 fontconfig-2.5 cairomm-1 libtool-2.2 pixman-0 gdal-1 mapnik-2 boost-python-1 python-2.6 bzip2-1.0 pycairo-1
 src_uri=https://github.com/mapnik/pymapnik2.git
 src_type=git
 install_method=buildout

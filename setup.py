@@ -1,7 +1,9 @@
 import os
+import re
 import sys
 from setuptools import setup, find_packages, extension
 
+reflags = re.X|re.S|re.U
 # we do not have the mapnik.utils module installed yet
 # just load it with exec
 mapnik_utils = {}
@@ -22,11 +24,30 @@ files = [os.path.join('cpp', f)
          if f.endswith('.cpp')]
 compilation_flags = get_compilation_flags()
 # BBB: needed for non standard pyairo.h to be found
-cf = ' '.join(compilation_flags['includes'])
-ldf = ' '.join(compilation_flags['extra_link_args'])
-os.environ['CFLAGS'] = cf
-os.environ['LDFLAGS'] = ldf
 
+cf = ' '.join(compilation_flags['includes'])
+cf += ' %s' % os.environ.get('CFLAGS', '')
+cf = cf.replace('  ', '').strip()
+
+cfp = cf.split()
+cfpp = []
+for idx, i in enumerate(cfp[:]):
+    add = True
+    if i.startswith('-I/') and (i in cfp[idx+1:]):
+        add = False
+    if add:
+        cfpp.append(i)
+cf = ' '.join(cfpp)
+
+ldf = ' '.join(compilation_flags['extra_link_args'])
+ldf += ' %s' % os.environ.get('LDFLAGS', '')
+# filter rpath
+ldf = re.sub('-Wl,-rpath -Wl,[^ ]* ', '' , ldf, reflags)
+ldf = ldf.replace('  ', '').strip()
+
+os.environ['LDFLAGS'] = os.environ['CFLAGS'] = ''
+
+# import pdb;pdb.set_trace()
 # pycairo does not play well with setuptools
 # the user may install it himself
 #for lib in compilation_flags['extra_link_args']:
@@ -37,6 +58,7 @@ os.environ['LDFLAGS'] = ldf
 #        install_requires.append(dep)
 #        break
 
+# import pdb;pdb.set_trace()
 version = '2.1.0'
 if 'MAPNIK_DEBUG' in os.environ:
     summary(compilation_flags)
@@ -65,9 +87,9 @@ setup(
         extension.Extension(
             "_mapnik", files,
             include_dirs=[sources_dir, agg_sources_dir],
-            extra_compile_args = compilation_flags.get('includes', []),
+            extra_compile_args = cf.split(),
             libraries = compilation_flags.get('libraries', []),
-            extra_link_args = compilation_flags.get('extra_link_args', []),
+            extra_link_args = ldf.split(),
         ),
     ],
     install_requires=['setuptools'],
