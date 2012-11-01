@@ -204,6 +204,8 @@ def get_compilation_flags():
         sys.stderr.write('Warning: libboost_python not found')
     compilation_flags['includes'].extend(
         mapnik_config(["--cflags"]).split())
+    compilation_flags['extra_link_args'].append(
+        mapnik_config(["--ldflags"]))
     compilation_flags['extra_link_args'].extend(
         mapnik_config(["--libs"]).split())
     compilation_flags['macros'].extend(   cf['macros'])
