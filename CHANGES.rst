@@ -1,7 +1,7 @@
 Changelog for mapnik2
 ========================
 
-2.1.0.5 (unreleased)
+2.1.0.5 (2012-11-01)
 --------------------
 
 - freebsd port
