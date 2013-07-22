@@ -2,7 +2,7 @@
 
 from nose.tools import *
 
-from mapnik.tests.python_tests.utilities import execution_path, Todo
+from utilities import execution_path, run_all
 
 import os, sys, glob, mapnik
 
@@ -18,7 +18,7 @@ polys = ["POLYGON ((30 10, 10 20, 20 40, 40 40, 30 10))",
          "MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),((20 35, 45 20, 30 5, 10 10, 10 30, 20 35),(30 20, 20 25, 20 15, 30 20)))"
         ]
 
-plugins = mapnik.DatasourceCache.instance().plugin_names()
+plugins = mapnik.DatasourceCache.plugin_names()
 if 'shape' in plugins and 'ogr' in plugins:
 
     def ensure_geometries_are_interpreted_equivalently(filename):
@@ -41,4 +41,4 @@ if 'shape' in plugins and 'ogr' in plugins:
 
 if __name__ == "__main__":
     setup()
-    [eval(run)() for run in dir() if 'test_' in run]
+    run_all(eval(x) for x in dir() if x.startswith("test_"))

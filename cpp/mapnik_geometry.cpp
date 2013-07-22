@@ -26,6 +26,8 @@
 #include <boost/python/iterator.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/noncopyable.hpp>
+
 
 // mapnik
 #include <mapnik/geometry.hpp>
@@ -40,6 +42,9 @@
 #include <mapnik/util/geometry_to_wkt.hpp>
 #include <mapnik/util/geometry_to_svg.hpp>
 #endif
+
+// stl
+#include <stdexcept>
 
 namespace {
 
@@ -232,11 +237,11 @@ std::string to_svg( geometry_type const& geom)
     bool result = mapnik::util::to_svg(svg,geom);
     if (!result)
     {
-        throw std::runtime_error("Generate WKT failed");
+        throw std::runtime_error("Generate SVG failed");
     }
     return svg;
 #else
-    throw std::runtime_error("mapnik::to_wkt() requires at least boost 1.47 while your build was compiled against boost "
+    throw std::runtime_error("mapnik::to_svg() requires at least boost 1.47 while your build was compiled against boost "
                              + boost_version());
 #endif
 }

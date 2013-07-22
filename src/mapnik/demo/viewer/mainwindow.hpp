@@ -17,13 +17,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-//$Id$
 
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
 #include <QMainWindow>
-#include <QPrinter>
 #include <QList>
 #include <QActionGroup>
 #include <QStatusBar>
@@ -79,7 +77,6 @@ private:
     LayerTab  *layerTab_;
     StyleTab * styleTab_;
     MapWidget * mapWidget_;
-    QPrinter printer;
     //actions
     QList<QAction *> exportAsActs;
     QActionGroup *toolsGroup;

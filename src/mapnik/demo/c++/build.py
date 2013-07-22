@@ -17,7 +17,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
-# $Id$
+# 
 
 import os
 from copy import copy
@@ -36,8 +36,8 @@ demo_env = env.Clone()
 demo_env['CXXFLAGS'] = copy(env['LIBMAPNIK_CXXFLAGS'])
 
 if env['HAS_CAIRO']:
-    demo_env.PrependUnique(CPPPATH=env['CAIROMM_CPPPATHS'])
-    demo_env.Append(CXXFLAGS = '-DHAVE_CAIRO')
+    demo_env.PrependUnique(CPPPATH=env['CAIRO_CPPPATHS'])
+    demo_env.Append(CPPDEFINES = '-DHAVE_CAIRO')
 
 libraries =  copy(env['LIBMAPNIK_LIBS'])
 libraries.append('mapnik')

@@ -2,20 +2,28 @@
 # -*- coding: utf-8 -*-
 
 import glob
+import sys
 from nose.tools import *
-from mapnik.tests.python_tests.utilities import execution_path
+from utilities import execution_path
 
 import os, mapnik
 
+default_logging_severity = mapnik.logger.get_severity()
+
 def setup():
+    # make the tests silent since we intentially test error conditions that are noisy
+    mapnik.logger.set_severity(mapnik.severity_type.None)
     # All of the paths used are relative, if we run the tests
     # from another directory we need to chdir()
     os.chdir(execution_path('.'))
 
-if 'csv' in mapnik.DatasourceCache.instance().plugin_names():
+def teardown():
+    mapnik.logger.set_severity(default_logging_severity)
+
+if 'csv' in mapnik.DatasourceCache.plugin_names():
 
     def get_csv_ds(filename):
-        return mapnik.Datasource(type='csv',file=os.path.join('../data/csv/',filename),quiet=True)
+        return mapnik.Datasource(type='csv',file=os.path.join('../data/csv/',filename))
 
     def test_broken_files(visual=False):
         broken = glob.glob("../data/csv/fails/*.*")
@@ -28,7 +36,7 @@ if 'csv' in mapnik.DatasourceCache.instance().plugin_names():
             throws = False
             if visual:
                 try:
-                    ds = mapnik.Datasource(type='csv',file=csv,strict=True,quiet=True)
+                    ds = mapnik.Datasource(type='csv',file=csv,strict=True)
                     print '\x1b[33mfailed\x1b[0m',csv
                 except Exception:
                     print '\x1b[1;32m✓ \x1b[0m', csv
@@ -40,7 +48,7 @@ if 'csv' in mapnik.DatasourceCache.instance().plugin_names():
         for csv in good_files:
             if visual:
                 try:
-                    ds = mapnik.Datasource(type='csv',file=csv,quiet=True)
+                    ds = mapnik.Datasource(type='csv',file=csv)
                     print '\x1b[1;32m✓ \x1b[0m', csv
                 except Exception:
                     print '\x1b[33mfailed\x1b[0m',csv
@@ -137,9 +145,9 @@ if 'csv' in mapnik.DatasourceCache.instance().plugin_names():
 
     def test_wkt_field(**kwargs):
         ds = get_csv_ds('wkt.csv')
-        eq_(len(ds.fields()),2)
-        eq_(ds.fields(),['type','WKT'])
-        eq_(ds.field_types(),['str','str'])
+        eq_(len(ds.fields()),1)
+        eq_(ds.fields(),['type'])
+        eq_(ds.field_types(),['str'])
         fs = ds.all_features()
         eq_(len(fs[0].geometries()),1)
         eq_(fs[0].geometries()[0].type(),mapnik.DataGeometryType.Point)
@@ -206,7 +214,7 @@ if 'csv' in mapnik.DatasourceCache.instance().plugin_names():
         eq_(desc['type'],mapnik.DataType.Vector)
         eq_(desc['encoding'],'utf-8')
 
-    def test_windows_newlines(**kwargs):
+    def test_reading_windows_newlines(**kwargs):
         ds = get_csv_ds('windows_newlines.csv')
         eq_(len(ds.fields()),3)
         feats = ds.all_features()
@@ -222,8 +230,8 @@ if 'csv' in mapnik.DatasourceCache.instance().plugin_names():
         eq_(desc['type'],mapnik.DataType.Vector)
         eq_(desc['encoding'],'utf-8')
 
-    def test_mac_newlines(**kwargs):
-        ds = get_csv_ds('windows_newlines.csv')
+    def test_reading_mac_newlines(**kwargs):
+        ds = get_csv_ds('mac_newlines.csv')
         eq_(len(ds.fields()),3)
         feats = ds.all_features()
         eq_(len(feats),1)
@@ -237,6 +245,42 @@ if 'csv' in mapnik.DatasourceCache.instance().plugin_names():
         eq_(desc['name'],'csv')
         eq_(desc['type'],mapnik.DataType.Vector)
         eq_(desc['encoding'],'utf-8')
+
+    def check_newlines(filename):
+        ds = get_csv_ds(filename)
+        eq_(len(ds.fields()),3)
+        feats = ds.all_features()
+        eq_(len(feats),1)
+        fs = ds.featureset()
+        feat = fs.next()
+        eq_(feat['x'],0)
+        eq_(feat['y'],0)
+        eq_(feat['line'],'many\n  lines\n  of text\n  with unix newlines')
+        desc = ds.describe()
+        eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
+        eq_(desc['name'],'csv')
+        eq_(desc['type'],mapnik.DataType.Vector)
+        eq_(desc['encoding'],'utf-8')
+
+    def test_mixed_mac_unix_newlines(**kwargs):
+        check_newlines('mac_newlines_with_unix_inline.csv')
+
+    def test_mixed_mac_unix_newlines_escaped(**kwargs):
+        check_newlines('mac_newlines_with_unix_inline_escaped.csv')
+
+    # To hard to support this case
+    #def test_mixed_unix_windows_newlines(**kwargs):
+    #    check_newlines('unix_newlines_with_windows_inline.csv')
+
+    # To hard to support this case
+    #def test_mixed_unix_windows_newlines_escaped(**kwargs):
+    #    check_newlines('unix_newlines_with_windows_inline_escaped.csv')
+
+    def test_mixed_windows_unix_newlines(**kwargs):
+        check_newlines('windows_newlines_with_unix_inline.csv')
+
+    def test_mixed_windows_unix_newlines_escaped(**kwargs):
+        check_newlines('windows_newlines_with_unix_inline_escaped.csv')
 
     def test_tabs(**kwargs):
         ds = get_csv_ds('tabs_in_csv.csv')
@@ -360,9 +404,9 @@ if 'csv' in mapnik.DatasourceCache.instance().plugin_names():
         eq_(feat['Name'],u"Winthrop, WA")
 
     def validate_geojson_datasource(ds):
-        eq_(len(ds.fields()),2)
-        eq_(ds.fields(),['type','GeoJSON'])
-        eq_(ds.field_types(),['str','str'])
+        eq_(len(ds.fields()),1)
+        eq_(ds.fields(),['type'])
+        eq_(ds.field_types(),['str'])
         fs = ds.all_features()
         eq_(len(fs[0].geometries()),1)
         eq_(fs[0].geometries()[0].type(),mapnik.DataGeometryType.Point)
@@ -417,6 +461,115 @@ if 'csv' in mapnik.DatasourceCache.instance().plugin_names():
     def test_that_fewer_headers_than_rows_throws(**kwargs):
         # this has invalid header # so throw
         ds = get_csv_ds('more_column_values_than_headers.csv')
+
+    def test_that_feature_id_only_incremented_for_valid_rows(**kwargs):
+        ds = mapnik.Datasource(type='csv',
+                               file=os.path.join('../data/csv/warns','feature_id_counting.csv'))
+        eq_(len(ds.fields()),3)
+        eq_(ds.fields(),['x','y','id'])
+        eq_(ds.field_types(),['int','int','int'])
+        fs = ds.featureset()
+        # first
+        feat = fs.next()
+        eq_(feat['x'],0)
+        eq_(feat['y'],0)
+        eq_(feat['id'],1)
+        # second, should have skipped bogus one
+        feat = fs.next()
+        eq_(feat['x'],0)
+        eq_(feat['y'],0)
+        eq_(feat['id'],2)
+        desc = ds.describe()
+        eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
+        eq_(len(ds.all_features()),2)
+
+    def test_dynamically_defining_headers1(**kwargs):
+        ds = mapnik.Datasource(type='csv',
+                               file=os.path.join('../data/csv/fails','needs_headers_two_lines.csv'),
+                               headers='x,y,name')
+        eq_(len(ds.fields()),3)
+        eq_(ds.fields(),['x','y','name'])
+        eq_(ds.field_types(),['int','int','str'])
+        fs = ds.featureset()
+        feat = fs.next()
+        eq_(feat['x'],0)
+        eq_(feat['y'],0)
+        eq_(feat['name'],'data_name')
+        desc = ds.describe()
+        eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
+        eq_(len(ds.all_features()),2)
+
+    def test_dynamically_defining_headers2(**kwargs):
+        ds = mapnik.Datasource(type='csv',
+                               file=os.path.join('../data/csv/fails','needs_headers_one_line.csv'),
+                               headers='x,y,name')
+        eq_(len(ds.fields()),3)
+        eq_(ds.fields(),['x','y','name'])
+        eq_(ds.field_types(),['int','int','str'])
+        fs = ds.featureset()
+        feat = fs.next()
+        eq_(feat['x'],0)
+        eq_(feat['y'],0)
+        eq_(feat['name'],'data_name')
+        desc = ds.describe()
+        eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
+        eq_(len(ds.all_features()),1)
+
+    def test_dynamically_defining_headers3(**kwargs):
+        ds = mapnik.Datasource(type='csv',
+                               file=os.path.join('../data/csv/fails','needs_headers_one_line_no_newline.csv'),
+                               headers='x,y,name')
+        eq_(len(ds.fields()),3)
+        eq_(ds.fields(),['x','y','name'])
+        eq_(ds.field_types(),['int','int','str'])
+        fs = ds.featureset()
+        feat = fs.next()
+        eq_(feat['x'],0)
+        eq_(feat['y'],0)
+        eq_(feat['name'],'data_name')
+        desc = ds.describe()
+        eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
+        eq_(len(ds.all_features()),1)
+
+    def test_that_64bit_int_fields_work(**kwargs):
+        ds = get_csv_ds('64bit_int.csv')
+        eq_(len(ds.fields()),3)
+        eq_(ds.fields(),['x','y','bigint'])
+        eq_(ds.field_types(),['int','int','int'])
+        fs = ds.featureset()
+        feat = fs.next()
+        eq_(feat['bigint'],2147483648)
+        feat = fs.next()
+        eq_(feat['bigint'],sys.maxint)
+        eq_(feat['bigint'],9223372036854775807)
+        eq_(feat['bigint'],0x7FFFFFFFFFFFFFFF)
+        desc = ds.describe()
+        eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
+        eq_(len(ds.all_features()),2)
+
+    def test_various_number_types(**kwargs):
+        ds = get_csv_ds('number_types.csv')
+        eq_(len(ds.fields()),3)
+        eq_(ds.fields(),['x','y','floats'])
+        eq_(ds.field_types(),['int','int','float'])
+        fs = ds.featureset()
+        feat = fs.next()
+        eq_(feat['floats'],.0)
+        feat = fs.next()
+        eq_(feat['floats'],+.0)
+        feat = fs.next()
+        eq_(feat['floats'],1e-06)
+        feat = fs.next()
+        eq_(feat['floats'],-1e-06)
+        feat = fs.next()
+        eq_(feat['floats'],0.000001)
+        feat = fs.next()
+        eq_(feat['floats'],1.234e+16)
+        feat = fs.next()
+        eq_(feat['floats'],1.234e+16)
+        desc = ds.describe()
+        eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
+        eq_(len(ds.all_features()),8)
 
 if __name__ == "__main__":
     setup()

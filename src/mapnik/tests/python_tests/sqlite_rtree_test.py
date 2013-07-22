@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from nose.tools import *
-from mapnik.tests.python_tests.utilities import execution_path
+from utilities import execution_path, run_all
 from Queue import Queue
 import threading
 
@@ -22,7 +22,7 @@ def create_ds():
     ds = mapnik.SQLite(file=DB,table=TABLE)
     fs = ds.all_features()
 
-if 'sqlite' in mapnik.DatasourceCache.instance().plugin_names():
+if 'sqlite' in mapnik.DatasourceCache.plugin_names():
 
     def test_rtree_creation():
 
@@ -47,7 +47,7 @@ if 'sqlite' in mapnik.DatasourceCache.instance().plugin_names():
             conn.commit()
             eq_(cur.fetchone()[0],TOTAL)
         except sqlite3.OperationalError:
-            # don't worry about testing # of index records if 
+            # don't worry about testing # of index records if
             # python's sqlite module does not support rtree
             pass
         cur.close()
@@ -133,7 +133,7 @@ if 'sqlite' in mapnik.DatasourceCache.instance().plugin_names():
         eq_(feat['name'],'test point')
         geoms = feat.geometries()
         eq_(len(geoms),1)
-        eq_(geoms.to_wkt(),'Point(-122.0 48.0)')
+        eq_(geoms.to_wkt(),'Point(-122 48)')
 
         # ensure it matches data read with just sqlite
         cur = conn.cursor()
@@ -156,4 +156,4 @@ if 'sqlite' in mapnik.DatasourceCache.instance().plugin_names():
 
 if __name__ == "__main__":
     setup()
-    [eval(run)() for run in dir() if 'test_' in run]
+    run_all(eval(x) for x in dir() if x.startswith("test_"))
