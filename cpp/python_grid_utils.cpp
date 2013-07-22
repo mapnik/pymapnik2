@@ -39,13 +39,16 @@
 #include "mapnik_value_converter.hpp"
 #include "python_grid_utils.hpp"
 
+// stl
+#include <stdexcept>
+
 namespace mapnik {
 
 
 template <typename T>
 void grid2utf(T const& grid_type,
                      boost::python::list& l,
-                     std::vector<grid::lookup_type>& key_order)
+                     std::vector<typename T::lookup_type>& key_order)
 {
     typedef std::map< typename T::lookup_type, typename T::value_type> keys_type;
     typedef typename keys_type::const_iterator keys_iterator;
@@ -121,8 +124,7 @@ void grid2utf(T const& grid_type,
     // start counting at utf8 codepoint 32, aka space character
     boost::uint16_t codepoint = 32;
 
-    // TODO - use double?
-    unsigned array_size = static_cast<unsigned int>(grid_type.width()/resolution);
+    unsigned array_size = std::ceil(grid_type.width()/static_cast<float>(resolution));
     for (unsigned y = 0; y < grid_type.height(); y=y+resolution)
     {
         boost::uint16_t idx = 0;

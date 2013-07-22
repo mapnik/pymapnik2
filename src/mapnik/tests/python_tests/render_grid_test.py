@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from nose.tools import *
-from mapnik.tests.python_tests.utilities import execution_path
+from utilities import execution_path, run_all
 import os, mapnik
 
 try:
@@ -268,11 +268,19 @@ def test_32bit_int_id():
     eq_(grid.get_pixel(128,128),int32)
     utf1 = grid.encode('utf',resolution=4)
     eq_(utf1['keys'],[str(int32)])
-
-    # this will fail because it is used internally to mark alpha
-    #max_neg = -(int32+1)
-    # so we use max neg-1
     max_neg = -(int32)
+    grid = gen_grid_for_id(max_neg)
+    eq_(grid.get_pixel(128,128),max_neg)
+    utf1 = grid.encode('utf',resolution=4)
+    eq_(utf1['keys'],[str(max_neg)])
+
+def test_64bit_int_id():
+    int64 = 0x7FFFFFFFFFFFFFFF
+    grid = gen_grid_for_id(int64)
+    eq_(grid.get_pixel(128,128),int64)
+    utf1 = grid.encode('utf',resolution=4)
+    eq_(utf1['keys'],[str(int64)])
+    max_neg = -(int64)
     grid = gen_grid_for_id(max_neg)
     eq_(grid.get_pixel(128,128),max_neg)
     utf1 = grid.encode('utf',resolution=4)
@@ -374,4 +382,4 @@ def test_render_to_grid_multiple_times():
 
 if __name__ == "__main__":
     setup()
-    [eval(run)() for run in dir() if 'test_' in run]
+    run_all(eval(x) for x in dir() if x.startswith("test_"))

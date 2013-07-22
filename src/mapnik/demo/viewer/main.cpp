@@ -17,18 +17,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-//$Id$
 
 // qt
-#include <QApplication>
+#include <QtWidgets/QApplication>
 #include <QStringList>
 #include <QSettings>
 #include <mapnik/datasource_cache.hpp>
 #include <mapnik/font_engine_freetype.hpp>
 #include "mainwindow.hpp"
+
 // boost
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem/operations.hpp>
 
 
 int main( int argc, char **argv )
@@ -46,7 +45,7 @@ int main( int argc, char **argv )
         // register input plug-ins
         QString plugins_dir = settings.value("mapnik/plugins_dir",
                                              QVariant("/usr/local/lib/mapnik/input/")).toString();
-        datasource_cache::instance()->register_datasources(plugins_dir.toStdString());
+        datasource_cache::instance().register_datasources(plugins_dir.toStdString());
         // register fonts
         int count = settings.beginReadArray("mapnik/fonts");
         for (int index=0; index < count; ++index)
