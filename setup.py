@@ -65,7 +65,7 @@ ldf = ' '.join(ldfpp)
 
 os.environ['LDFLAGS'] = os.environ['CFLAGS'] = ''
 
-version = '2.1.0.6.dev0'
+version = '2.2.0'
 if 'MAPNIK_DEBUG' in os.environ:
     summary(compilation_flags)
     print "CFLAGS: %s\n" % cf

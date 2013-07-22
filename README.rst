@@ -45,6 +45,11 @@ To use with:
         easy_install -U mapnik2==2.1.0
 
 
+    - :mapnik2 library - 2.2.0: == mapnik2 2.2.0
+       ::
+
+        easy_install -U mapnik2==2.2.0
+
 Credits
 =========
 
@@ -65,6 +70,7 @@ Contributors
 ---------------
 
     - kiorky <kiorky@cryptelium.net>
+    - dodobas <dodobas@geoinfo.geof.hr>
 
 Installation
 ======================================
