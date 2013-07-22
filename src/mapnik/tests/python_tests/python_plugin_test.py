@@ -129,7 +129,7 @@ if 'python' in mapnik.DatasourceCache.plugin_names():
         assert_almost_equal(e.maxx, 180, places=7)
         assert_almost_equal(e.maxy, 90, places=7)
 
-    def test_python_point_rendering():
+    def Xtest_python_point_rendering():
         m = mapnik.Map(512,512)
         mapnik.load_map(m,'../data/python_plugin/python_point_datasource.xml')
         m.zoom_all()
@@ -142,7 +142,7 @@ if 'python' in mapnik.DatasourceCache.plugin_names():
         eq_(im.tostring(),expected_im.tostring(),
                 'failed comparing actual (%s) and expected (%s)' % (actual,'tests/python_tests/'+ expected))
 
-    def test_python_circle_rendering():
+    def Xtest_python_circle_rendering():
         m = mapnik.Map(512,512)
         mapnik.load_map(m,'../data/python_plugin/python_circle_datasource.xml')
         m.zoom_all()
