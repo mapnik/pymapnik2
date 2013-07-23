@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from nose.tools import *
-from mapnik.tests.python_tests.utilities import execution_path
+from utilities import execution_path, run_all
 
 import os, mapnik
 
@@ -10,7 +10,7 @@ def setup():
     # from another directory we need to chdir()
     os.chdir(execution_path('.'))
 
-if 'sqlite' in mapnik.DatasourceCache.instance().plugin_names():
+if 'sqlite' in mapnik.DatasourceCache.plugin_names():
 
     def test_attachdb_with_relative_file():
         # The point table and index is in the qgis_spatiallite.sqlite
@@ -311,18 +311,14 @@ if 'sqlite' in mapnik.DatasourceCache.instance().plugin_names():
             table='(select * from empty where !intersects!)',
             )
         fs = ds.featureset()
-        feature = fs.next()
+        feature = None
+        try :
+            feature = fs.next()
+        except StopIteration:
+            pass
         eq_(feature,None)
 
-    def test_intersects_token1():
-        ds = mapnik.SQLite(file='../data/sqlite/empty.db',
-            table='(select * from empty where "a"!="b" and !intersects!)',
-            )
-        fs = ds.featureset()
-        feature = fs.next()
-        eq_(feature,None)
-
-    def test_intersects_token1():
+    def test_intersects_token2():
         ds = mapnik.SQLite(file='../data/sqlite/empty.db',
             table='(select * from empty where "a"!="b" and !intersects!)',
             )
@@ -334,6 +330,92 @@ if 'sqlite' in mapnik.DatasourceCache.instance().plugin_names():
             pass
         eq_(feature,None)
 
+    def test_intersects_token3():
+        ds = mapnik.SQLite(file='../data/sqlite/empty.db',
+            table='(select * from empty where "a"!="b" and !intersects!)',
+            )
+        fs = ds.featureset()
+        feature = None
+        try :
+            feature = fs.next()
+        except StopIteration:
+            pass
+        eq_(feature,None)
+
+    # https://github.com/mapnik/mapnik/issues/1537
+    # this works because key_field is manually set
+    def test_db_with_one_text_column():
+        # form up an in-memory test db
+        wkb = '010100000000000000000000000000000000000000'
+        ds = mapnik.SQLite(file=':memory:',
+            table='test1',
+            initdb='''
+                create table test1 (alias TEXT,geometry BLOB);
+                insert into test1 values ("test",x'%s');
+                ''' % wkb,
+            extent='-180,-60,180,60',
+            use_spatial_index=False,
+            key_field='alias'
+        )
+        eq_(len(ds.fields()),1)
+        eq_(ds.fields(),['alias'])
+        eq_(ds.field_types(),['str'])
+        fs = ds.all_features()
+        eq_(len(fs),1)
+        feat = fs[0]
+        #eq_(feat.id(),1)
+        eq_(feat['alias'],'test')
+        eq_(len(feat.geometries()),1)
+        eq_(feat.geometries()[0].to_wkt(),'Point(0 0)')
+
+
+    def test_that_64bit_int_fields_work():
+        ds = mapnik.SQLite(file='../data/sqlite/64bit_int.sqlite',
+            table='int_table',
+            use_spatial_index=False
+        )
+        eq_(len(ds.fields()),3)
+        eq_(ds.fields(),['OGC_FID','id','bigint'])
+        eq_(ds.field_types(),['int','int','int'])
+        fs = ds.featureset()
+        feat = fs.next()
+        eq_(feat.id(),1)
+        eq_(feat['OGC_FID'],1)
+        eq_(feat['bigint'],2147483648)
+        feat = fs.next()
+        eq_(feat.id(),2)
+        eq_(feat['OGC_FID'],2)
+        eq_(feat['bigint'],922337203685477580)
+
+
+    def test_null_id_field():
+        # silence null key warning: https://github.com/mapnik/mapnik/issues/1889
+        default_logging_severity = mapnik.logger.get_severity()
+        mapnik.logger.set_severity(mapnik.severity_type.None)
+        # form up an in-memory test db
+        wkb = '010100000000000000000000000000000000000000'
+        # note: the osm_id should be declared INTEGER PRIMARY KEY
+        # but in this case we intentionally do not make this a valid pkey
+        # otherwise sqlite would turn the null into a valid, serial id
+        ds = mapnik.SQLite(file=':memory:',
+            table='test1',
+            initdb='''
+                create table test1 (osm_id INTEGER,geometry BLOB);
+                insert into test1 values (null,x'%s');
+                ''' % wkb,
+            extent='-180,-60,180,60',
+            use_spatial_index=False,
+            key_field='osm_id'
+        )
+        fs = ds.featureset()
+        feature = None
+        try :
+            feature = fs.next()
+        except StopIteration:
+            pass
+        eq_(feature,None)
+        mapnik.logger.set_severity(default_logging_severity)
+
 if __name__ == "__main__":
     setup()
-    [eval(run)() for run in dir() if 'test_' in run]
+    run_all(eval(x) for x in dir() if x.startswith("test_"))

@@ -34,7 +34,8 @@
 // mapnik
 #include <mapnik/shield_symbolizer.hpp>
 #include <mapnik/image_util.hpp>
-#include <mapnik/path_expression_grammar.hpp>
+#include <mapnik/parse_path.hpp>
+#include <mapnik/path_expression.hpp>
 #include "mapnik_svg.hpp"
 
 using mapnik::color;
@@ -75,7 +76,7 @@ void set_text_displacement(shield_symbolizer & t, boost::python::tuple arg)
     t.set_displacement(extract<double>(arg[0]),extract<double>(arg[1]));
 }
 
-const std::string get_filename(shield_symbolizer const& t)
+std::string get_filename(shield_symbolizer const& t)
 {
     return path_processor_type::to_string(*t.get_filename());
 }

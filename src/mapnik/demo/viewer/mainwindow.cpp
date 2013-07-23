@@ -17,7 +17,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-//$Id$
 
 // stl
 #include <iostream>
@@ -33,7 +32,10 @@
 #include <QSlider>
 #include <QComboBox>
 #include <QDoubleSpinBox>
-
+#include <QFileDialog>
+#include <QMenu>
+#include <QMenuBar>
+#include <QToolBar>
 // mapnik
 
 #ifndef Q_MOC_RUN // QT moc chokes on BOOST_JOIN

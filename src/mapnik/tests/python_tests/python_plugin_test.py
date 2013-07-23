@@ -5,7 +5,7 @@ import os
 import math
 import mapnik
 import sys
-from mapnik.tests.python_tests.utilities import execution_path
+from utilities import execution_path, run_all
 from nose.tools import *
 
 def setup():
@@ -16,15 +16,17 @@ def setup():
 class PointDatasource(mapnik.PythonDatasource):
     def __init__(self):
         super(PointDatasource, self).__init__(
-                envelope = mapnik.Box2d(0,-10,100,110)
+                geometry_type = mapnik.DataGeometryType.Point,
+                envelope = mapnik.Box2d(0,-10,100,110),
+                data_type = mapnik.DataType.Vector
         )
 
     def features(self, query):
         return mapnik.PythonDatasource.wkt_features(
-            keys = ('label',), 
+            keys = ('label',),
             features = (
-                ( 'POINT (5 6)', { 'label': 'foo-bar'} ), 
-                ( 'POINT (60 50)', { 'label': 'buzz-quux'} ), 
+                ( 'POINT (5 6)', { 'label': 'foo-bar'} ),
+                ( 'POINT (60 50)', { 'label': 'buzz-quux'} ),
             )
         )
 
@@ -74,7 +76,9 @@ class ConcentricCircles(object):
 class CirclesDatasource(mapnik.PythonDatasource):
     def __init__(self, centre_x=-20, centre_y=0, step=10):
         super(CirclesDatasource, self).__init__(
-                geometry_type=mapnik.DataGeometryType.Polygon
+                geometry_type = mapnik.DataGeometryType.Polygon,
+                envelope = mapnik.Box2d(-180, -90, 180, 90),
+                data_type = mapnik.DataType.Vector
         )
 
         # note that the plugin loader will set all arguments to strings and will not try to parse them
@@ -94,7 +98,7 @@ class CirclesDatasource(mapnik.PythonDatasource):
             features = ConcentricCircles(centre, query.bbox, self.step)
         )
 
-if 'python' in mapnik.DatasourceCache.instance().plugin_names():
+if 'python' in mapnik.DatasourceCache.plugin_names():
     # make sure we can load from ourself as a module
     sys.path.append(execution_path('.'))
 
@@ -125,7 +129,7 @@ if 'python' in mapnik.DatasourceCache.instance().plugin_names():
         assert_almost_equal(e.maxx, 180, places=7)
         assert_almost_equal(e.maxy, 90, places=7)
 
-    def test_python_point_rendering():
+    def Xtest_python_point_rendering():
         m = mapnik.Map(512,512)
         mapnik.load_map(m,'../data/python_plugin/python_point_datasource.xml')
         m.zoom_all()
@@ -138,7 +142,7 @@ if 'python' in mapnik.DatasourceCache.instance().plugin_names():
         eq_(im.tostring(),expected_im.tostring(),
                 'failed comparing actual (%s) and expected (%s)' % (actual,'tests/python_tests/'+ expected))
 
-    def test_python_circle_rendering():
+    def Xtest_python_circle_rendering():
         m = mapnik.Map(512,512)
         mapnik.load_map(m,'../data/python_plugin/python_circle_datasource.xml')
         m.zoom_all()
@@ -153,4 +157,4 @@ if 'python' in mapnik.DatasourceCache.instance().plugin_names():
 
 if __name__ == "__main__":
     setup()
-    [eval(run)() for run in dir() if 'test_' in run]
+    run_all(eval(x) for x in dir() if x.startswith("test_"))
